@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07071a">
+<title>Daftar Proyek — Arif Firman</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#ecebff;background:radial-gradient(ellipse at 15% -10%,#24155e,rgba(36,21,94,0) 55%),radial-gradient(ellipse at 95% 110%,#083b4d,rgba(8,59,77,0) 50%),#07071a;padding:40px 18px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:28px;font-weight:900;letter-spacing:.04em;margin-bottom:6px}
+.sub{color:#8d8bbd;margin-bottom:28px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+a.card{display:block;text-decoration:none;color:inherit;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.11);border-radius:18px;padding:18px;transition:transform .15s,border-color .15s}
+a.card:hover{transform:translateY(-3px);border-color:rgba(167,139,250,.6)}
+.ico{font-size:34px;margin-bottom:10px}
+.card h2{font-size:17px;margin-bottom:6px}
+.card p{font-size:13px;color:#8d8bbd;line-height:1.5}
+.tag{display:inline-block;margin-top:10px;font-size:10px;letter-spacing:.15em;font-weight:700;color:#c4b5fd}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Daftar Proyek</h1>
+  <p class="sub">Game dan aplikasi web buatan Arif Firman.</p>
+  <div class="grid">
+    <a class="card" href="../">
+      <div class="ico">🦸</div>
+      <h2>Petualangan Super Sofia &amp; Ali</h2>
+      <p>Game platformer keluarga, bisa dimainkan berdua.</p>
+      <span class="tag">PLATFORMER</span>
+    </a>
+    <a class="card" href="../tetris/">
+      <div class="ico">🧱</div>
+      <h2>Neon Tetris</h2>
+      <p>Tetris versi modern: hold, ghost piece, combo, T-Spin, kontrol sentuh untuk HP.</p>
+      <span class="tag">PUZZLE</span>
+    </a>
+  </div>
+</div>
+</body>
+</html>
