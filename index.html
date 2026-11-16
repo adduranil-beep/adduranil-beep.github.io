@@ -310,6 +310,42 @@ body.portrait:not(.ingame) #fsBtn{top:60px;right:10px}
  #title{grid-template-columns:72px minmax(0,1fr) 190px;grid-template-areas:"top top top" "nav logo play" "nav stage play"}
  #hmPlay{max-width:180px}.hmLv select{max-width:180px;font-size:11px}
 }
+
+/* ===== SEMUA UKURAN HP / TABLET ===== */
+body:not(.ingame) #fsBtn{display:none!important}
+#fsBtn2 svg{display:block;margin:auto}
+.hmPlayW{min-width:0}.hmLv,.hmLv select{max-width:100%}
+/* HP sangat sempit (Galaxy Fold layar luar, HP mini) */
+@media (orientation:portrait) and (max-width:300px){
+ .hmTop{padding:4px 6px;gap:4px}.hmTop #profBar{font-size:11px}#profBar button{font-size:10px;padding:3px 7px}
+ .hmPill{font-size:11px;padding:3px 7px}.hmIco{width:28px;height:28px;font-size:13px}
+ .hmNews,.hmPick,.cStat{display:none!important}.hmL1{font-size:9px;letter-spacing:1px}.hmL2{font-size:27px}.hmRib{font-size:8px}
+ #title .card{width:43vw;padding:5px}#title .card img{width:56px!important;height:56px!important}#title .card b{font-size:12px}#title .card small{font-size:9px}
+ #hmPlay span{font-size:26px}.hmLv select{font-size:11px}
+ .hmNav button{font-size:8px;padding:3px 1px}.hmNav b{font-size:15px}
+ body.portrait.ingame .btn{width:56px!important;height:56px!important;font-size:21px!important}
+ body.portrait.ingame #jump{width:76px!important;height:76px!important;font-size:14px!important}
+ body.portrait.ingame #pskB,body.portrait.ingame #sw{width:50px!important;height:50px!important}
+}
+/* HP tidur yang sangat pendek (Galaxy Fold tidur, HP mini) */
+@media (orientation:landscape) and (max-height:300px){
+ .btn{width:50px!important;height:50px!important;font-size:20px!important}
+ #jump{width:62px!important;height:62px!important;font-size:12px!important}
+ #sw{width:42px!important;height:42px!important;bottom:72px!important;font-size:13px!important}
+ #pskB{width:42px!important;height:42px!important;bottom:120px!important;font-size:16px!important}
+ #pskSel{bottom:124px!important;right:60px!important;transform:scale(.8)}
+ #fsBtn,#mBtn{top:40px!important;padding:3px 7px!important}#fsBtn{right:48px!important}
+ #skBtn,#homeBtn{top:40px!important;width:34px!important;height:34px!important;font-size:17px!important}#skBtn{right:84px!important}#homeBtn{right:122px!important}
+}
+@media (orientation:portrait) and (max-height:780px){.hmPick{display:none!important}.hmStage{padding-bottom:10px}}
+/* tombol beranda cukup besar untuk jari anak */
+#title select{min-height:32px}@media (orientation:landscape) and (max-height:300px){#fsBtn{min-height:32px}}
+
+.hmIco{min-width:36px;min-height:36px}#profBar button{min-height:32px}
+/* tablet berdiri: kartu & tombol tidak terlalu kecil */
+@media (orientation:portrait) and (min-width:700px){
+ #title .card{max-width:260px}.hmNav button{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -333,7 +369,7 @@ body.portrait:not(.ingame) #fsBtn{top:60px;right:10px}
   <canvas id="tBg"></canvas>
   <div class="hmTop">
     <div id="profBar"></div>
-    <div class="hmPills"><span class="hmPill" id="tWallet"></span><button class="hmIco" id="gfxBtn" onclick="gfxToggle()" title="Grafis">🎨</button><button class="hmIco" onclick="hmModal('help')" title="Cara main">❓</button></div>
+    <div class="hmPills"><span class="hmPill" id="tWallet"></span><button class="hmIco" id="gfxBtn" onclick="gfxToggle()" title="Grafis">🎨</button><button class="hmIco" id="fsBtn2" type="button" title="Layar penuh" aria-label="Layar penuh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="hmIco" onclick="hmModal('help')" title="Cara main">❓</button></div>
   </div>
   <div class="hmLogo"><div class="hmL1">PETUALANGAN SUPER</div><div class="hmL2"><span>S</span><span>o</span><span>f</span><span>i</span><span>a</span> <i>&amp;</i> <span>A</span><span>l</span><span>i</span></div><div class="hmRib">✨ BAB 2: NEGERI BADAI KACAU ✨</div></div>
   <div class="hmNews" id="hmNews"></div>
@@ -668,13 +704,23 @@ function exitFS() {
 const IS_APP = /; wv\)/.test(navigator.userAgent);
 ["fullscreenchange", "webkitfullscreenchange"].forEach((ev) => document.addEventListener(ev, () => {
   setTimeout(resize, 60);
-  const b = document.getElementById("fsBtn");
-  if (b) b.innerHTML = document.fullscreenElement || document.webkitFullscreenElement ? FS_OUT : FS_IN;
+  const b = document.getElementById("fsBtn"), b2 = document.getElementById("fsBtn2"), on = document.fullscreenElement || document.webkitFullscreenElement;
+  if (b) b.innerHTML = on ? FS_OUT : FS_IN;
+  if (b2) b2.innerHTML = (on ? FS_OUT : FS_IN).replace(/18/g, "16");
 }));
 window.addEventListener("load", () => {
-  const b = document.getElementById("fsBtn");
+  const b = document.getElementById("fsBtn"), b2 = document.getElementById("fsBtn2");
+  const canFS = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled || (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen));
+  if (b2) {
+    if (IS_APP || !canFS) b2.style.display = "none";
+    else b2.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (document.fullscreenElement || document.webkitFullscreenElement) exitFS();
+      else goFS();
+    });
+  }
   if (!b) return;
-  if (IS_APP) {
+  if (IS_APP || !canFS) {
     b.style.display = "none";
     return;
   }
@@ -2427,6 +2473,8 @@ function f3Css() {
 .f3end button.o{background:#ff7043;box-shadow:0 4px 0 #bf360c}
 .f3help{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);font-size:12px;background:#0007;padding:4px 10px;border-radius:10px;white-space:nowrap;pointer-events:none}
 @media (orientation:portrait){.f3help{display:none}.f3pad.r{width:150px}}
+@media (orientation:portrait) and (max-width:360px){.f3b{width:50px;height:50px;font-size:9.5px}.f3b b{font-size:18px}.f3pad{gap:5px}.f3pad.l{left:6px}.f3pad.r{right:6px;width:112px}.f3nm{font-size:11px}.f3nm img{width:28px;height:28px}.f3vs{font-size:18px}}
+@media (orientation:portrait) and (max-width:300px){.f3b{width:44px;height:44px;font-size:8.5px}.f3b b{font-size:16px}.f3pad.r{width:98px}#f3msg{font-size:24px}}
 @media (max-height:420px){.f3b{width:52px;height:52px;font-size:10px}.f3b b{font-size:18px}.f3pad.r{width:176px}.f3help{display:none}#f3x{top:56px}}
 .nogap .f3pad>*{margin:4px}`;
   document.head.appendChild(st);
@@ -3605,7 +3653,9 @@ function f3Render(W2) {
     G2.add(o);
   }
   const mid = (p.x + m.x) / 2, sep = Math.abs(p.x - m.x), asp = cam2.aspect;
-  const dist = Math.max(9, (sep + 4.5) / Math.max(0.6, asp) * (asp < 1 ? 0.95 : 1.1) + 3.5);
+  const vf = cam2.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * asp);
+  const dW = (sep / 2 + f3MW(W2) + 1.7) / Math.tan(hf / 2), dH = 5.6 * (1 + f3Idx() * 0.06) / 2 / Math.tan(vf / 2) + 1.5;
+  const dist = Math.max(8.5, dW, dH);
   if (F3.S.fog) {
     F3.S.fog.near = dist + 3;
     F3.S.fog.far = dist + 34;
@@ -3616,8 +3666,8 @@ function f3Render(W2) {
     sx = (Math.random() - 0.5) * 0.25;
     sy = (Math.random() - 0.5) * 0.2;
   }
-  cam2.position.set(mid * 0.85 + sx, 2.6 + dist * 0.12 + sy, dist);
-  cam2.lookAt(mid * 0.85, 1.9, 0);
+  cam2.position.set(mid + sx, 2.6 + dist * 0.1 + sy, dist);
+  cam2.lookAt(mid, 2.1, 0);
   R.render(S, cam2);
   const hp = document.getElementById("f3hpP"), hm = document.getElementById("f3hpM"), mt = document.getElementById("f3mt"), sb = document.getElementById("f3sb");
   if (hp) hp.style.width = Math.max(0, p.hp) + "%";
