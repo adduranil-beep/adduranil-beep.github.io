@@ -7088,11 +7088,17 @@ function update() {
     });
     return;
   }
-  if (state == "fwd") {
-    fwUpdate();
+  if (state == "fwd" || state == "f3d") {
+    if (state == "fwd") fwUpdate();
+    try {
+      if (CO.rm) {
+        CO._ka = (CO._ka || 0) + 1;
+        if (CO._ka % 8 == 0) coopSend();
+      }
+    } catch (e) {
+    }
     return;
   }
-  if (state == "f3d") return;
   if (state == "play") {
     fwCheck();
     try {
