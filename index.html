@@ -2017,6 +2017,1339 @@ function fixClimb() {
     return 0;
   }
 }
+const F3MON = [
+  { n: "Kadal Raksasa Rexo", k: "lizard", c: "#43a047", c2: "#c5e1a5", c3: "#1b5e20", hp: 120, dmg: 8, spd: 0.035, at: ["swipe", "breath", "stomp"], bc: "#76ff03", d: "Kadal raksasa penyembur api hijau!" },
+  { n: "Gorila Batu Gorok", k: "gorilla", c: "#78909c", c2: "#b0bec5", c3: "#37474f", hp: 145, dmg: 9, spd: 0.04, at: ["swipe", "stomp", "charge"], bc: "#ffab40", d: "Tinjunya sekeras batu gunung!" },
+  { n: "Kepiting Lava Kreb", k: "crab", c: "#e53935", c2: "#ffab91", c3: "#7f0000", hp: 165, dmg: 10, spd: 0.045, at: ["swipe", "breath", "charge"], bc: "#ff6d00", d: "Capitnya panas membara!" },
+  { n: "Naga Es Frosta", k: "dragon", c: "#4fc3f7", c2: "#e1f5fe", c3: "#0277bd", hp: 185, dmg: 11, spd: 0.045, at: ["breath", "swipe", "stomp"], bc: "#80d8ff", d: "Napasnya membekukan segalanya!" },
+  { n: "Robot Besi Bolt-X", k: "robot", c: "#90a4ae", c2: "#eceff1", c3: "#455a64", hp: 205, dmg: 12, spd: 0.05, at: ["beam", "charge", "stomp"], bc: "#ff1744", d: "Mata lasernya sangat berbahaya!" },
+  { n: "Gurita Kabut Okto", k: "octo", c: "#8e24aa", c2: "#e1bee7", c3: "#4a148c", hp: 225, dmg: 12, spd: 0.04, at: ["swipe", "breath", "stomp"], bc: "#ea80fc", d: "Delapan tentakel siap menyambar!" },
+  { n: "Serigala Bulan Lunar", k: "wolf", c: "#3949ab", c2: "#c5cae9", c3: "#1a237e", hp: 245, dmg: 13, spd: 0.06, at: ["charge", "swipe", "howl"], bc: "#b3e5fc", d: "Larinya secepat angin malam!" },
+  { n: "Raja Monster Tri-Naga", k: "tri", c: "#ffb300", c2: "#fff8e1", c3: "#3e2723", hp: 300, dmg: 14, spd: 0.05, at: ["breath", "swipe", "stomp", "charge", "beam"], bc: "#ffd600", d: "Monster terkuat dengan tiga kepala!" }
+];
+const F3ARENA = [
+  { sky: "#7ec8f0", fog: "#bfe6ff", floor: "#7cb342", rim: "#558b2f", deco: "#2e7d32" },
+  { sky: "#4527a0", fog: "#7e57c2", floor: "#5e35b1", rim: "#311b92", deco: "#b39ddb", stars: 1 },
+  { sky: "#0d1b4a", fog: "#283593", floor: "#3949ab", rim: "#1a237e", deco: "#ffd54f", stars: 1 },
+  { sky: "#5d4037", fog: "#8d6e63", floor: "#6d4c41", rim: "#3e2723", deco: "#e53935" },
+  { sky: "#b3e5fc", fog: "#e1f5fe", floor: "#e3f2fd", rim: "#90caf9", deco: "#4fc3f7" },
+  { sky: "#37474f", fog: "#607d8b", floor: "#546e7a", rim: "#263238", deco: "#ffb300" },
+  { sky: "#0b0b2a", fog: "#303060", floor: "#cfd8dc", rim: "#90a4ae", deco: "#eceff1", stars: 1 },
+  { sky: "#263238", fog: "#455a64", floor: "#37474f", rim: "#212121", deco: "#ffd600", stars: 1 }
+];
+let F3G = null;
+const F3 = { on: false, loading: null };
+function f3Idx() {
+  return Math.min(7, Math.floor(((level || 1) - 1) / 4));
+}
+function f3Place() {
+  F3G = null;
+  try {
+    if (room || ((level || 1) - 1) % 4) return;
+    const A1 = AREAX[1] < W ? AREAX[1] : Math.floor(W / 3), A2 = AREAX[2] < W ? AREAX[2] : Math.floor(W * 2 / 3);
+    const tries = [Math.floor(A1 + (A2 - A1) * 0.25), Math.floor(A1 * 0.3), Math.floor(A2 + (W - A2) * 0.2)];
+    for (const tg of tries) {
+      for (let k = 0; k < 80; k++) {
+        const x = tg + (k % 2 ? 1 : -1) * Math.ceil(k / 2);
+        if (x < 12 || x > W - 20) continue;
+        if (FWG.some((g) => Math.abs(g.x - x) < 10)) continue;
+        if (fwOK(x)) {
+          F3G = { x, used: 0, cd: 0, t: 0 };
+          ents = ents.filter((e) => Math.abs(e.x - (x * T + 64)) > T * 5);
+          return;
+        }
+      }
+    }
+  } catch (e) {
+    F3G = null;
+  }
+}
+function f3PortalDraw() {
+  const g = F3G;
+  if (!g || room) return;
+  const x = g.x * T + 2 * T, y = 13 * T;
+  if (x + 120 < cam || x - 120 > cam + VW) return;
+  g.t++;
+  const t = g.t;
+  ctx.save();
+  const M = F3MON[f3Idx()];
+  if (!g.used) {
+    ctx.globalAlpha = 0.35 + Math.sin(t * 0.08) * 0.1;
+    const gl = ctx.createRadialGradient(x, y - 70, 4, x, y - 70, 110);
+    gl.addColorStop(0, "#e040fb");
+    gl.addColorStop(1, "rgba(124,77,255,0)");
+    ctx.fillStyle = gl;
+    ctx.beginPath();
+    ctx.arc(x, y - 70, 110, 0, 7);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = "#4e342e";
+  ctx.beginPath();
+  ctx.ellipse(x, y - 70, 58, 78, 0, 0, 7);
+  ctx.fill();
+  ctx.fillStyle = "#6d4c41";
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * 56, y - 70 + Math.sin(a) * 76, 9, 0, 7);
+    ctx.fill();
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y - 70, 46, 66, 0, 0, 7);
+  ctx.clip();
+  ctx.fillStyle = g.used ? "#37474f" : "#1a0033";
+  ctx.fillRect(x - 50, y - 140, 100, 140);
+  if (!g.used) {
+    for (let i = 0; i < 6; i++) {
+      ctx.strokeStyle = ["#e040fb", "#7c4dff", "#18ffff"][i % 3];
+      ctx.lineWidth = 5;
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath();
+      const r = 10 + i * 9;
+      ctx.ellipse(x, y - 70, r, r * 1.4, t * 0.05 + i, 0.3, Math.PI * 1.4);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 0.9;
+    ctx.font = "34px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("👹", x, y - 58 + Math.sin(t * 0.1) * 4);
+  } else {
+    ctx.font = "30px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🏆", x, y - 60);
+  }
+  ctx.restore();
+  rr(x - 78, y - 178, 156, 26, 9, "rgba(0,0,0,.65)");
+  ctx.font = "bold 13px Fredoka";
+  ctx.fillStyle = g.used ? "#a5d6a7" : "#ffd54f";
+  ctx.textAlign = "center";
+  ctx.fillText(g.used ? "✔ Monster dikalahkan!" : "🌀 Lorong Rahasia: Duel 3D!", x, y - 160);
+  if (!g.used) {
+    ctx.font = "bold 10px Fredoka";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("Lawan: " + M.n, x, y - 146);
+  }
+  ctx.restore();
+}
+function f3Check() {
+  const g = F3G;
+  if (!g || g.used || room || state != "play" || !P) return;
+  if (g.cd > 0) {
+    g.cd--;
+    return;
+  }
+  const cx = P.x + 12, px = g.x * T + 2 * T;
+  if (Math.abs(cx - px) < 34 && P.ground) f3Enter();
+}
+function f3Load() {
+  if (window.THREE) return Promise.resolve();
+  if (F3.loading) return F3.loading;
+  F3.loading = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+    let done = 0;
+    s.onload = () => {
+      done = 1;
+      window.THREE ? res() : rej(new Error("no THREE"));
+    };
+    s.onerror = () => {
+      done = 1;
+      rej(new Error("load"));
+    };
+    document.head.appendChild(s);
+    setTimeout(() => {
+      if (!done) rej(new Error("timeout"));
+    }, 2e4);
+  }).catch((e) => {
+    F3.loading = null;
+    throw e;
+  });
+  return F3.loading;
+}
+function f3Css() {
+  if (document.getElementById("f3css")) return;
+  const st = document.createElement("style");
+  st.id = "f3css";
+  st.textContent = `
+#f3d{position:fixed;top:0;left:0;right:0;bottom:0;z-index:40;background:#000;touch-action:none;user-select:none;-webkit-user-select:none;font-family:Fredoka,sans-serif;color:#fff;overflow:hidden}
+#f3d canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
+.f3hud{position:absolute;top:8px;left:8px;right:8px;display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none}
+.f3side{width:42%;max-width:340px}.f3side.r{text-align:right}
+.f3nm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;text-shadow:0 2px 0 #000}.f3side.r .f3nm{flex-direction:row-reverse}
+.f3nm img{width:34px;height:34px;border-radius:50%;border:3px solid #fff;object-fit:cover;background:#fff}
+.f3nm .f3em{font-size:26px;line-height:34px}
+.f3bar{height:16px;margin-top:4px;border-radius:8px;background:#0008;border:2px solid #fff;overflow:hidden}
+.f3bar i{display:block;height:100%;width:100%;background:linear-gradient(#69f0ae,#00c853);transition:width .15s}
+.f3side.r .f3bar i{background:linear-gradient(#ff8a80,#d50000);margin-left:auto}
+.f3vs{font-weight:800;font-size:26px;color:#ffd600;text-shadow:0 3px 0 #c62828;padding-top:6px}
+.f3meter{height:8px;margin-top:3px;border-radius:4px;background:#0008;overflow:hidden;width:70%}.f3meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff4081,#ffd600,#69f0ae,#40c4ff)}
+#f3msg{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);text-align:center;font-weight:800;font-size:34px;color:#ffd600;text-shadow:0 4px 0 #000,0 0 18px #000;pointer-events:none;white-space:pre-line;width:92%}
+#f3msg small{display:block;font-size:16px;color:#fff;font-weight:600;margin-top:6px}
+.f3pad{position:absolute;bottom:12px;display:flex;gap:8px;align-items:flex-end}
+.f3pad.l{left:10px}.f3pad.r{right:10px;flex-wrap:wrap;justify-content:flex-end;width:200px}
+.f3b{width:62px;height:62px;border-radius:50%;border:3px solid #fff;background:#0007;color:#fff;font:700 12px Fredoka,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;padding:0;touch-action:none}
+.f3b b{font-size:22px;line-height:1}
+.f3b.on{background:#fff5;transform:scale(.94)}
+.f3b.p{background:#e53935aa}.f3b.k{background:#fb8c00aa}.f3b.g{background:#1e88e5aa}.f3b.s{background:#8e24aaaa}.f3b.s.full{background:linear-gradient(#ff4081,#7c4dff);box-shadow:0 0 14px #ff80ab}
+#f3x{position:absolute;top:62px;right:10px;border:2px solid #fff;border-radius:14px;background:#0008;color:#fff;font:700 12px Fredoka,sans-serif;padding:6px 10px}
+.f3end{position:absolute;left:50%;top:62%;transform:translateX(-50%);display:flex;gap:10px}
+.f3end button{border:3px solid #fff;border-radius:18px;padding:10px 18px;font:700 17px Fredoka,sans-serif;color:#fff;background:#43a047;box-shadow:0 4px 0 #1b5e20}
+.f3end button.o{background:#ff7043;box-shadow:0 4px 0 #bf360c}
+.f3help{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);font-size:12px;background:#0007;padding:4px 10px;border-radius:10px;white-space:nowrap;pointer-events:none}
+@media (orientation:portrait){.f3help{display:none}.f3pad.r{width:150px}}
+@media (max-height:420px){.f3b{width:52px;height:52px;font-size:10px}.f3b b{font-size:18px}.f3pad.r{width:176px}.f3help{display:none}#f3x{top:56px}}
+.nogap .f3pad>*{margin:4px}`;
+  document.head.appendChild(st);
+}
+function f3Enter() {
+  if (F3.on) return;
+  F3.on = true;
+  state = "f3d";
+  for (const k in key) key[k] = 0;
+  try {
+    musStop();
+  } catch (e) {
+  }
+  f3Css();
+  const M = F3MON[f3Idx()];
+  const ov = document.createElement("div");
+  ov.id = "f3d";
+  ov.innerHTML = '<div id="f3msg">🌀 Masuk Lorong Rahasia...<small>Memanggil ' + M.n + "</small></div>";
+  document.body.appendChild(ov);
+  F3.ov = ov;
+  try {
+    snd(220, 0.5, "sawtooth", 400);
+    setTimeout(() => snd(330, 0.5, "sawtooth", 500), 200);
+  } catch (e) {
+  }
+  f3Load().then(() => {
+    if (F3.ov === ov) f3Start();
+  }).catch(() => {
+    if (F3.ov !== ov) return;
+    document.getElementById("f3msg").innerHTML = "📡 Lorong rahasia butuh internet<small>Sambungkan internet lalu coba masuk lagi ya!</small>";
+    setTimeout(() => f3Exit(false), 2600);
+  });
+}
+function f3Exit(win) {
+  const g = F3G;
+  F3.on = false;
+  cancelAnimationFrame(F3.raf);
+  F3.raf = 0;
+  if (F3.kd) {
+    removeEventListener("keydown", F3.kd, true);
+    removeEventListener("keyup", F3.ku, true);
+    F3.kd = F3.ku = null;
+  }
+  if (F3.rs) {
+    removeEventListener("resize", F3.rs);
+    F3.rs = null;
+  }
+  try {
+    if (F3.R) {
+      F3.R.dispose();
+      F3.R.forceContextLoss && F3.R.forceContextLoss();
+    }
+  } catch (e) {
+  }
+  F3.R = null;
+  F3.S = null;
+  F3.W = null;
+  if (F3.ov) {
+    F3.ov.remove();
+    F3.ov = null;
+  }
+  state = "play";
+  for (const k in key) key[k] = 0;
+  if (g && P) {
+    if (win) {
+      g.used = 1;
+      P.x = g.x * T + 4 * T + 8;
+    } else {
+      P.x = g.x * T - T * 1.5;
+      g.cd = 150;
+    }
+    P.y = 13 * T - (P.h || 46);
+    P.vx = 0;
+    P.vy = 0;
+    P.inv = Math.max(P.inv || 0, 60);
+  }
+  fadeT = 24;
+  try {
+    musPlay(PLV[level - 1][0], PLV[level - 1][1]);
+  } catch (e) {
+  }
+}
+function f3Mat(c, em) {
+  return new THREE.MeshLambertMaterial({ color: c, emissive: em || 0 });
+}
+function f3Face(img, ring) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const x = c.getContext("2d");
+  x.fillStyle = ring;
+  x.beginPath();
+  x.arc(64, 64, 63, 0, 7);
+  x.fill();
+  x.save();
+  x.beginPath();
+  x.arc(64, 64, 54, 0, 7);
+  x.clip();
+  x.fillStyle = "#fff";
+  x.fillRect(0, 0, 128, 128);
+  try {
+    if (img && img.complete && img.width) {
+      const s = Math.min(img.width, img.height);
+      x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 10, 10, 108, 108);
+    }
+  } catch (e) {
+  }
+  x.restore();
+  const t = new THREE.CanvasTexture(c);
+  return t;
+}
+function f3Hero() {
+  const T3 = THREE, g = new T3.Group(), girl = hero == "girl", sk = SK && BANK.eq && SK[BANK.eq[hero]] || {};
+  const shirt = sk.shirt && sk.shirt != "rainbow" ? sk.shirt : girl ? "#ec407a" : "#1e88e5", pants = sk.pants || (girl ? "#7b1fa2" : "#0d47a1"), skin = "#ffccbc";
+  const leg = () => {
+    const p = new T3.Group(), m = new T3.Mesh(new T3.CylinderGeometry(0.11, 0.1, 0.55, 8), f3Mat(pants));
+    m.position.y = -0.27;
+    p.add(m);
+    const sh2 = new T3.Mesh(new T3.BoxGeometry(0.2, 0.1, 0.3), f3Mat("#5d4037"));
+    sh2.position.set(0, -0.56, 0.05);
+    p.add(sh2);
+    return p;
+  };
+  const arm = () => {
+    const p = new T3.Group(), m = new T3.Mesh(new T3.CylinderGeometry(0.08, 0.07, 0.5, 8), f3Mat(shirt));
+    m.position.y = -0.25;
+    p.add(m);
+    const h = new T3.Mesh(new T3.SphereGeometry(0.09, 8, 6), f3Mat(skin));
+    h.position.y = -0.52;
+    p.add(h);
+    return p;
+  };
+  const lL = leg(), lR = leg();
+  lL.position.set(-0.13, 0.62, 0);
+  lR.position.set(0.13, 0.62, 0);
+  const body = new T3.Mesh(girl ? new T3.CylinderGeometry(0.22, 0.38, 0.62, 10) : new T3.BoxGeometry(0.5, 0.6, 0.32), f3Mat(shirt));
+  body.position.y = 0.92;
+  const aL = arm(), aR = arm();
+  aL.position.set(-0.33, 1.18, 0);
+  aR.position.set(0.33, 1.18, 0);
+  const head = new T3.Sprite(new T3.SpriteMaterial({ map: f3Face(face[hero], girl ? "#f06292" : "#42a5f5") }));
+  head.scale.set(0.78, 0.78, 1);
+  head.position.y = 1.62;
+  g.add(lL, lR, body, aL, aR, head);
+  g.userData = { lL, lR, aL, aR, body, head };
+  g.scale.set(1.3, 1.3, 1.3);
+  const sh = new T3.Mesh(new T3.CircleGeometry(0.45, 16), new T3.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.25 }));
+  sh.rotation.x = -Math.PI / 2;
+  sh.position.y = 0.01;
+  g.add(sh);
+  g.userData.sh = sh;
+  const shield = new T3.Mesh(new T3.SphereGeometry(0.95, 16, 10), new T3.MeshBasicMaterial({ color: 4244735, transparent: true, opacity: 0.3 }));
+  shield.position.y = 0.95;
+  shield.visible = false;
+  g.add(shield);
+  g.userData.shield = shield;
+  return g;
+}
+function f3Monster(M) {
+  const T3 = THREE, g = new T3.Group(), u = { arms: [], legs: [], tent: [], wings: [], heads: [], mats: [] };
+  const m = (c, e) => {
+    const x = f3Mat(c, e);
+    u.mats.push(x);
+    return x;
+  };
+  const C = M.c, C2 = M.c2, C3 = M.c3, k = M.k;
+  const eye = (par, x, y, z, s, glow) => {
+    const w = new T3.Mesh(new T3.SphereGeometry(s, 10, 8), glow ? new T3.MeshBasicMaterial({ color: glow }) : m("#ffffff"));
+    w.position.set(x, y, z);
+    par.add(w);
+    if (!glow) {
+      const p = new T3.Mesh(new T3.SphereGeometry(s * 0.55, 8, 6), m("#111111"));
+      p.position.set(x + s * 0.3, y, z + s * 0.55);
+      par.add(p);
+    }
+  };
+  const limb2 = (len, r, col, x, y, z) => {
+    const p = new T3.Group();
+    const mm = new T3.Mesh(new T3.CylinderGeometry(r, r * 0.85, len, 8), m(col));
+    mm.position.y = -len / 2;
+    p.add(mm);
+    const e = new T3.Mesh(new T3.SphereGeometry(r * 1.15, 8, 6), m(col));
+    e.position.y = -len;
+    p.add(e);
+    p.position.set(x, y, z);
+    return p;
+  };
+  if (k == "lizard" || k == "dragon" || k == "tri") {
+    const body = new T3.Mesh(new T3.SphereGeometry(1, 16, 12), m(C));
+    body.scale.set(1.05, 1.35, 0.9);
+    body.position.y = 2.2;
+    g.add(body);
+    const belly = new T3.Mesh(new T3.SphereGeometry(0.8, 14, 10), m(C2));
+    belly.scale.set(0.9, 1.2, 0.6);
+    belly.position.set(0.25, 2.1, 0.35);
+    g.add(belly);
+    for (let i = 0; i < 5; i++) {
+      const sp = new T3.Mesh(new T3.ConeGeometry(0.22, 0.6, 6), m(k == "tri" ? "#ff6f00" : C3));
+      sp.position.set(-0.55 - i * 0.05, 3.25 - i * 0.42, 0);
+      sp.rotation.z = 0.7 + i * 0.12;
+      g.add(sp);
+    }
+    let tx = -0.9, ty = 1.5, tr = 0.45;
+    for (let i = 0; i < 6; i++) {
+      const s = new T3.Mesh(new T3.SphereGeometry(tr, 10, 8), m(C));
+      s.position.set(tx, ty, 0);
+      g.add(s);
+      u.tent.push({ o: s, i, bx: tx, by: ty });
+      tx -= 0.42;
+      ty -= 0.12;
+      tr *= 0.82;
+    }
+    const nH = k == "tri" ? 3 : 1;
+    for (let h = 0; h < nH; h++) {
+      const hg = new T3.Group();
+      const off = nH == 3 ? h - 1 : 0;
+      hg.position.set(0.75 + (nH == 3 ? Math.abs(off) * -0.15 : 0), 3.55 + (nH == 3 ? off == 0 ? 0.45 : 0 : 0), off * 0.7);
+      const hd = new T3.Mesh(new T3.SphereGeometry(0.55, 14, 10), m(C));
+      hd.scale.set(1.15, 0.95, 0.9);
+      hg.add(hd);
+      const sn = new T3.Mesh(new T3.BoxGeometry(0.75, 0.4, 0.6), m(C));
+      sn.position.set(0.55, -0.12, 0);
+      hg.add(sn);
+      const jaw = new T3.Mesh(new T3.BoxGeometry(0.7, 0.14, 0.55), m(C3));
+      jaw.position.set(0.55, -0.38, 0);
+      hg.add(jaw);
+      u.jaw = u.jaw || jaw;
+      for (let t = 0; t < 3; t++) {
+        const th = new T3.Mesh(new T3.ConeGeometry(0.05, 0.14, 4), m("#ffffff"));
+        th.rotation.z = Math.PI;
+        th.position.set(0.35 + t * 0.2, -0.26, 0.22);
+        hg.add(th);
+      }
+      eye(hg, 0.25, 0.22, 0.33, 0.14);
+      eye(hg, 0.25, 0.22, -0.33, 0.14);
+      if (k != "lizard") {
+        for (const s of [-1, 1]) {
+          const hr = new T3.Mesh(new T3.ConeGeometry(0.1, 0.55, 6), m(k == "tri" ? "#fff8e1" : "#e1f5fe"));
+          hr.position.set(-0.2, 0.55, s * 0.25);
+          hr.rotation.z = 0.5;
+          hg.add(hr);
+        }
+      }
+      if (nH == 3) {
+        const nk = new T3.Mesh(new T3.CylinderGeometry(0.22, 0.3, 1, 8), m(C));
+        nk.position.set(-0.35, -0.55, 0);
+        nk.rotation.z = 0.5;
+        hg.add(nk);
+      }
+      g.add(hg);
+      u.heads.push(hg);
+    }
+    u.arms.push(limb2(0.8, 0.17, C, 0.6, 2.75, 0.6), limb2(0.8, 0.17, C, 0.6, 2.75, -0.6));
+    u.legs.push(limb2(1.05, 0.32, C, -0.1, 1.2, 0.5), limb2(1.05, 0.32, C, -0.1, 1.2, -0.5));
+    if (k != "lizard") {
+      for (const s of [-1, 1]) {
+        const wg = new T3.Group();
+        const wm = new T3.Mesh(new T3.ConeGeometry(1.2, 1.8, 3), new T3.MeshLambertMaterial({ color: k == "tri" ? "#bf360c" : C3, side: T3.DoubleSide, transparent: true, opacity: 0.85 }));
+        wm.rotation.z = -Math.PI / 2;
+        wm.scale.z = 0.12;
+        wm.position.set(-0.6, 0.4, 0);
+        wg.add(wm);
+        wg.position.set(-0.3, 2.9, s * 0.6);
+        wg.rotation.x = s * 0.6;
+        g.add(wg);
+        u.wings.push({ o: wg, s });
+      }
+    }
+  } else if (k == "gorilla") {
+    const body = new T3.Mesh(new T3.DodecahedronGeometry(1.25, 1), m(C));
+    body.scale.set(1.1, 1.15, 0.95);
+    body.position.y = 2.4;
+    g.add(body);
+    const ch = new T3.Mesh(new T3.SphereGeometry(0.75, 12, 8), m(C2));
+    ch.scale.set(0.7, 1, 0.5);
+    ch.position.set(0.55, 2.3, 0);
+    g.add(ch);
+    const hg = new T3.Group();
+    hg.position.set(0.55, 3.75, 0);
+    const hd = new T3.Mesh(new T3.DodecahedronGeometry(0.62, 1), m(C));
+    hg.add(hd);
+    const mz = new T3.Mesh(new T3.SphereGeometry(0.42, 10, 8), m(C2));
+    mz.position.set(0.38, -0.15, 0);
+    mz.scale.set(0.8, 0.8, 1.1);
+    hg.add(mz);
+    eye(hg, 0.4, 0.18, 0.24, 0.11);
+    eye(hg, 0.4, 0.18, -0.24, 0.11);
+    const brow = new T3.Mesh(new T3.BoxGeometry(0.3, 0.12, 0.75), m(C3));
+    brow.position.set(0.42, 0.34, 0);
+    hg.add(brow);
+    g.add(hg);
+    u.heads.push(hg);
+    u.arms.push(limb2(1.7, 0.32, C, 0.5, 3.2, 0.95), limb2(1.7, 0.32, C, 0.5, 3.2, -0.95));
+    u.legs.push(limb2(0.9, 0.35, C3, 0, 1.15, 0.5), limb2(0.9, 0.35, C3, 0, 1.15, -0.5));
+    for (let i = 0; i < 5; i++) {
+      const r = new T3.Mesh(new T3.DodecahedronGeometry(0.22, 0), m(C3));
+      r.position.set(-0.6 + Math.random() * 0.6, 2 + Math.random() * 1.5, (Math.random() - 0.5) * 1.6);
+      g.add(r);
+    }
+  } else if (k == "crab") {
+    const body = new T3.Mesh(new T3.SphereGeometry(1.2, 16, 10), m(C));
+    body.scale.set(1.3, 0.7, 1);
+    body.position.y = 1.5;
+    g.add(body);
+    for (let i = 0; i < 6; i++) {
+      const s = i < 3 ? 1 : -1, j = i % 3;
+      const lg = limb2(1.1, 0.09, C3, -0.4 + j * 0.45, 1.3, s * 0.95);
+      lg.rotation.x = s * 0.9;
+      g.add(lg);
+      u.legs.push(lg);
+    }
+    const hg = new T3.Group();
+    hg.position.set(0.6, 2.1, 0);
+    for (const s of [-1, 1]) {
+      const st = new T3.Mesh(new T3.CylinderGeometry(0.06, 0.06, 0.6, 6), m(C));
+      st.position.set(0, 0.3, s * 0.3);
+      hg.add(st);
+      eye(hg, 0, 0.65, s * 0.3, 0.16);
+    }
+    g.add(hg);
+    u.heads.push(hg);
+    for (const s of [-1, 1]) {
+      const cl = new T3.Group();
+      const a = new T3.Mesh(new T3.CylinderGeometry(0.16, 0.14, 1, 8), m(C));
+      a.position.y = -0.5;
+      cl.add(a);
+      const p1 = new T3.Mesh(new T3.SphereGeometry(0.42, 12, 8), m(C));
+      p1.scale.set(1.3, 0.8, 0.8);
+      p1.position.set(0.3, -1.1, 0);
+      cl.add(p1);
+      const p2 = new T3.Mesh(new T3.ConeGeometry(0.2, 0.7, 8), m(C3));
+      p2.position.set(0.75, -1, 0);
+      p2.rotation.z = -Math.PI / 2;
+      cl.add(p2);
+      cl.position.set(0.9, 2, s * 0.95);
+      cl.rotation.z = 1.2;
+      g.add(cl);
+      u.arms.push(cl);
+    }
+    const lava = new T3.Mesh(new T3.SphereGeometry(0.9, 12, 8), new T3.MeshBasicMaterial({ color: "#ffab00", transparent: true, opacity: 0.35 }));
+    lava.scale.set(1.3, 0.4, 1);
+    lava.position.y = 2.1;
+    g.add(lava);
+  } else if (k == "robot") {
+    const body = new T3.Mesh(new T3.BoxGeometry(1.7, 1.9, 1.3), m(C));
+    body.position.y = 2.4;
+    g.add(body);
+    const pl = new T3.Mesh(new T3.BoxGeometry(0.1, 1.2, 0.9), m(C3));
+    pl.position.set(0.86, 2.4, 0);
+    g.add(pl);
+    const core = new T3.Mesh(new T3.SphereGeometry(0.25, 12, 8), new T3.MeshBasicMaterial({ color: "#00e5ff" }));
+    core.position.set(0.9, 2.5, 0);
+    g.add(core);
+    const hg = new T3.Group();
+    hg.position.set(0, 3.75, 0);
+    const hd = new T3.Mesh(new T3.BoxGeometry(1.1, 0.8, 0.95), m(C2));
+    hg.add(hd);
+    const vz = new T3.Mesh(new T3.BoxGeometry(0.06, 0.22, 0.8), new T3.MeshBasicMaterial({ color: "#ff1744" }));
+    vz.position.set(0.56, 0.05, 0);
+    hg.add(vz);
+    const an = new T3.Mesh(new T3.CylinderGeometry(0.03, 0.03, 0.6, 6), m(C3));
+    an.position.y = 0.65;
+    hg.add(an);
+    const ab = new T3.Mesh(new T3.SphereGeometry(0.1, 8, 6), new T3.MeshBasicMaterial({ color: "#ffea00" }));
+    ab.position.y = 0.98;
+    hg.add(ab);
+    g.add(hg);
+    u.heads.push(hg);
+    u.arms.push(limb2(1.3, 0.22, C3, 0.1, 3.1, 1), limb2(1.3, 0.22, C3, 0.1, 3.1, -1));
+    u.legs.push(limb2(1.2, 0.28, C3, 0, 1.45, 0.45), limb2(1.2, 0.28, C3, 0, 1.45, -0.45));
+  } else if (k == "octo") {
+    const hd = new T3.Mesh(new T3.SphereGeometry(1.35, 16, 12), m(C));
+    hd.scale.set(1, 1.25, 1);
+    hd.position.y = 3;
+    g.add(hd);
+    const hg = new T3.Group();
+    hg.position.set(0.95, 2.9, 0);
+    eye(hg, 0, 0, 0.42, 0.26);
+    eye(hg, 0, 0, -0.42, 0.26);
+    g.add(hg);
+    u.heads.push(hg);
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * Math.PI * 2;
+      const arr = [];
+      for (let j = 0; j < 6; j++) {
+        const s = new T3.Mesh(new T3.SphereGeometry(0.28 * (1 - j * 0.12), 8, 6), m(j % 2 ? C : C2));
+        g.add(s);
+        arr.push(s);
+      }
+      u.tent.push({ arr, a });
+    }
+  } else if (k == "wolf") {
+    const body = new T3.Mesh(new T3.SphereGeometry(1, 14, 10), m(C));
+    body.scale.set(1.5, 0.85, 0.8);
+    body.position.y = 2;
+    g.add(body);
+    const mane = new T3.Mesh(new T3.SphereGeometry(0.85, 12, 8), m(C2));
+    mane.position.set(0.8, 2.4, 0);
+    mane.scale.set(0.8, 1.1, 1);
+    g.add(mane);
+    const hg = new T3.Group();
+    hg.position.set(1.5, 3, 0);
+    const hd = new T3.Mesh(new T3.SphereGeometry(0.5, 12, 8), m(C));
+    hg.add(hd);
+    const sn = new T3.Mesh(new T3.ConeGeometry(0.28, 0.75, 8), m(C));
+    sn.rotation.z = -Math.PI / 2;
+    sn.position.set(0.55, -0.12, 0);
+    hg.add(sn);
+    const nose = new T3.Mesh(new T3.SphereGeometry(0.09, 8, 6), m("#111111"));
+    nose.position.set(0.92, -0.1, 0);
+    hg.add(nose);
+    for (const s of [-1, 1]) {
+      const ea = new T3.Mesh(new T3.ConeGeometry(0.16, 0.45, 6), m(C3));
+      ea.position.set(-0.1, 0.5, s * 0.25);
+      hg.add(ea);
+    }
+    eye(hg, 0.32, 0.12, 0.25, 0.09, "#ffeb3b");
+    eye(hg, 0.32, 0.12, -0.25, 0.09, "#ffeb3b");
+    g.add(hg);
+    u.heads.push(hg);
+    u.arms.push(limb2(1.2, 0.2, C, 1.1, 1.7, 0.45), limb2(1.2, 0.2, C, 1.1, 1.7, -0.45));
+    u.legs.push(limb2(1.2, 0.22, C, -0.8, 1.7, 0.45), limb2(1.2, 0.22, C, -0.8, 1.7, -0.45));
+    let tx = -1.4;
+    for (let i = 0; i < 4; i++) {
+      const s = new T3.Mesh(new T3.SphereGeometry(0.3 - i * 0.04, 8, 6), m(i == 3 ? C2 : C));
+      s.position.set(tx, 2.3 + i * 0.15, 0);
+      g.add(s);
+      u.tent.push({ o: s, i, bx: tx, by: 2.3 + i * 0.15 });
+      tx -= 0.3;
+    }
+  }
+  u.arms.forEach((a) => g.add(a));
+  u.legs.forEach((l) => {
+    if (!l.parent) g.add(l);
+  });
+  const sh = new T3.Mesh(new T3.CircleGeometry(1.6, 20), new T3.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.28 }));
+  sh.rotation.x = -Math.PI / 2;
+  sh.position.y = 0.01;
+  g.add(sh);
+  g.userData = u;
+  return g;
+}
+function f3Start() {
+  const T3 = THREE, M = F3MON[f3Idx()], A = F3ARENA[f3Idx()], ov = F3.ov, lv = level || 1;
+  ov.innerHTML = `<canvas id="f3c"></canvas>
+<div class="f3hud"><div class="f3side"><div class="f3nm"><img id="f3pf" alt=""><span>${hero == "girl" ? "Kak Pemberani" : "Dik Jagoan"}</span></div><div class="f3bar"><i id="f3hpP"></i></div><div class="f3meter"><i id="f3mt"></i></div></div>
+<div class="f3vs">VS</div>
+<div class="f3side r"><div class="f3nm"><span class="f3em">👹</span><span>${M.n}</span></div><div class="f3bar"><i id="f3hpM"></i></div></div></div>
+<div id="f3msg"></div>
+<div class="f3help">⬅➡ jalan • ⬆ lompat • Z pukul • X tendang • C tangkis • V jurus</div>
+<button type="button" id="f3x">✕ Keluar</button>
+<div class="f3pad l"><button type="button" class="f3b" data-k="L"><b>◀</b></button><button type="button" class="f3b" data-k="R"><b>▶</b></button><button type="button" class="f3b" data-k="U"><b>▲</b>Lompat</button></div>
+<div class="f3pad r"><button type="button" class="f3b g" data-k="B"><b>🛡</b>Tangkis</button><button type="button" class="f3b s" data-k="S" id="f3sb"><b>🌈</b>Jurus</button><button type="button" class="f3b k" data-k="K"><b>💥</b>Tendang</button><button type="button" class="f3b p" data-k="P"><b>👊</b>Pukul</button></div>`;
+  try {
+    document.getElementById("f3pf").src = face[hero] && face[hero].src || "";
+  } catch (e) {
+  }
+  const cv2 = document.getElementById("f3c");
+  let R;
+  try {
+    R = new T3.WebGLRenderer({ canvas: cv2, antialias: !OLDDEV, powerPreference: "high-performance" });
+  } catch (e) {
+    document.getElementById("f3msg").innerHTML = "😢 HP ini belum mendukung 3D<small>Lorong rahasia dilewati dulu ya</small>";
+    setTimeout(() => f3Exit(false), 2600);
+    return;
+  }
+  R.setPixelRatio(Math.min(window.devicePixelRatio || 1, OLDDEV ? 1 : 1.6));
+  const S = new T3.Scene();
+  S.background = new T3.Color(A.sky);
+  S.fog = new T3.Fog(A.fog, 16, 42);
+  const cam2 = new T3.PerspectiveCamera(45, 1, 0.1, 100);
+  S.add(new T3.HemisphereLight(16777215, A.floor, 0.95));
+  const dl = new T3.DirectionalLight(16777215, 0.75);
+  dl.position.set(4, 10, 8);
+  S.add(dl);
+  const fl = new T3.Mesh(new T3.CylinderGeometry(11, 11.6, 0.6, 40), f3Mat(A.floor));
+  fl.position.y = -0.3;
+  S.add(fl);
+  const rim = new T3.Mesh(new T3.TorusGeometry(11.1, 0.25, 8, 48), f3Mat(A.rim));
+  rim.rotation.x = Math.PI / 2;
+  S.add(rim);
+  for (let i = 0; i < 14; i++) {
+    const a = Math.PI * (0.05 + i / 13 * 0.9);
+    const x = Math.cos(a) * 14, z = -Math.sin(a) * 14;
+    const h = 2 + i * 37 % 5;
+    const p = new T3.Mesh(i % 2 ? new T3.CylinderGeometry(0.5, 0.7, h, 8) : new T3.ConeGeometry(1.2, h + 1, 7), f3Mat(i % 2 ? A.rim : A.deco));
+    p.position.set(x, h / 2, z);
+    S.add(p);
+  }
+  if (A.stars) {
+    const gg = new T3.BufferGeometry(), pts = [];
+    for (let i = 0; i < 220; i++) pts.push((Math.random() - 0.5) * 90, 8 + Math.random() * 30, -20 - Math.random() * 25);
+    gg.setAttribute("position", new T3.Float32BufferAttribute(pts, 3));
+    S.add(new T3.Points(gg, new T3.PointsMaterial({ color: 16777215, size: 0.25 })));
+  }
+  const H3 = f3Hero();
+  S.add(H3);
+  const MO = f3Monster(M);
+  S.add(MO);
+  const sc = 1 + f3Idx() * 0.06;
+  MO.scale.set(sc, sc, sc);
+  const fx = [];
+  const W2 = {
+    M,
+    A,
+    lv,
+    t: 0,
+    ph: "intro",
+    pt: 0,
+    end: 0,
+    p: { x: -4, y: 0, vy: 0, f: 1, hp: 100, act: "idle", at: 0, cmb: 0, cmbT: 0, inv: 0, meter: 0, hurtT: 0, walk: 0 },
+    m: { x: 4, y: 0, vy: 0, f: -1, hp: Math.round(M.hp * (1 + (lv - 1) * 0.012)), max: 0, act: "idle", at: 0, think: 90, atk: null, hurtT: 0, hits: 0, hitsT: 0, stun: 0, walk: 0, vx: 0 },
+    k: { L: 0, R: 0, U: 0, P: 0, K: 0, B: 0, S: 0 },
+    kp: {},
+    fx,
+    sh: 0,
+    hitStop: 0
+  };
+  W2.m.max = W2.m.hp;
+  F3.R = R;
+  F3.S = S;
+  F3.W = W2;
+  F3.cam = cam2;
+  F3.H3 = H3;
+  F3.MO = MO;
+  const size = () => {
+    const w = ov.clientWidth || innerWidth, h = ov.clientHeight || innerHeight;
+    R.setSize(w, h, false);
+    cam2.aspect = w / h;
+    cam2.updateProjectionMatrix();
+  };
+  size();
+  F3.rs = size;
+  addEventListener("resize", size);
+  const KM = { ArrowLeft: "L", a: "L", ArrowRight: "R", d: "R", ArrowUp: "U", w: "U", " ": "U", z: "P", j: "P", x: "K", k: "K", c: "B", l: "B", v: "S", i: "S", Shift: "B" };
+  F3.kd = (e) => {
+    if (!F3.on) return;
+    const c = KM[e.key] || KM[(e.key || "").toLowerCase()];
+    if (e.key == "Escape") {
+      f3Exit(false);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+    if (c) {
+      if (!W2.k[c]) W2.kp[c] = 1;
+      W2.k[c] = 1;
+      e.preventDefault();
+    }
+    e.stopImmediatePropagation();
+  };
+  F3.ku = (e) => {
+    if (!F3.on) return;
+    const c = KM[e.key] || KM[(e.key || "").toLowerCase()];
+    if (c) W2.k[c] = 0;
+    e.stopImmediatePropagation();
+  };
+  addEventListener("keydown", F3.kd, true);
+  addEventListener("keyup", F3.ku, true);
+  ov.querySelectorAll(".f3b").forEach((b) => {
+    const c = b.getAttribute("data-k");
+    const dn = (e) => {
+      e.preventDefault();
+      if (!W2.k[c]) W2.kp[c] = 1;
+      W2.k[c] = 1;
+      b.classList.add("on");
+      try {
+        if (AC && AC.state == "suspended") AC.resume();
+      } catch (_) {
+      }
+    };
+    const up = (e) => {
+      e.preventDefault();
+      W2.k[c] = 0;
+      b.classList.remove("on");
+    };
+    b.addEventListener("pointerdown", dn);
+    b.addEventListener("pointerup", up);
+    b.addEventListener("pointercancel", up);
+    b.addEventListener("pointerleave", up);
+    b.addEventListener("contextmenu", (e) => e.preventDefault());
+  });
+  document.getElementById("f3x").addEventListener("click", () => f3Exit(false));
+  f3Msg(M.n + "\n⚔️ SIAP? ⚔️", M.d);
+  try {
+    musPlay("boss", 0);
+  } catch (e) {
+  }
+  let last2 = performance.now(), acc2 = 0;
+  const loop2 = (now) => {
+    if (!F3.on || F3.W !== W2) return;
+    F3.raf = requestAnimationFrame(loop2);
+    acc2 += Math.min(100, now - last2);
+    last2 = now;
+    let n = 0;
+    while (acc2 >= 16.67 && n < 4) {
+      f3Step(W2);
+      acc2 -= 16.67;
+      n++;
+    }
+    f3Render(W2);
+  };
+  F3.raf = requestAnimationFrame(loop2);
+}
+function f3Msg(a, b) {
+  const e = document.getElementById("f3msg");
+  if (e) e.innerHTML = a ? a.replace(/\n/g, "<br>") + (b ? "<small>" + b + "</small>" : "") : "";
+}
+function f3Snd(f, d, t, s) {
+  try {
+    snd(f, d, t, s);
+  } catch (e) {
+  }
+}
+function f3Spark(W2, x, y, col, n) {
+  for (let i = 0; i < (n || 8); i++) W2.fx.push({ k: "spark", x, y, z: (Math.random() - 0.5) * 0.6, vx: (Math.random() - 0.5) * 0.16, vy: Math.random() * 0.16, life: 24, col });
+}
+function f3Step(W2) {
+  W2.t++;
+  const p = W2.p, m = W2.m, M = W2.M, k = W2.k, kp = W2.kp;
+  if (W2.hitStop > 0) {
+    W2.hitStop--;
+    W2.kp = {};
+    return;
+  }
+  if (W2.ph == "intro") {
+    W2.pt++;
+    if (W2.pt == 100) f3Msg("MULAI!");
+    if (W2.pt > 140) {
+      W2.ph = "fight";
+      f3Msg("");
+    }
+    W2.kp = {};
+    return;
+  }
+  if (W2.ph == "end") {
+    W2.pt++;
+    W2.kp = {};
+    f3Anim(W2);
+    return;
+  }
+  if (p.inv > 0) p.inv--;
+  if (p.hurtT > 0) p.hurtT--;
+  if (p.cmbT > 0) p.cmbT--;
+  else p.cmb = 0;
+  const onG = p.y <= 1e-3;
+  p.f = m.x > p.x ? 1 : -1;
+  if (p.act == "hurt") {
+    if (p.hurtT <= 0) p.act = "idle";
+  } else if (p.act == "punch" || p.act == "kick" || p.act == "special") {
+    p.at++;
+    const dur = p.act == "punch" ? 16 : p.act == "kick" ? 24 : 30, hitF = p.act == "punch" ? 6 : p.act == "kick" ? 10 : 12;
+    if (p.at == hitF) {
+      if (p.act == "special") {
+        W2.fx.push({ k: "ball", own: "p", x: p.x + p.f * 0.6, y: 1.2, vx: p.f * 0.22, dmg: 24, life: 90, col: 16728193 });
+        f3Snd(880, 0.4, "sine", 600);
+      } else {
+        const rng2 = (p.act == "punch" ? 1.15 : 1.55) + f3MW(W2), dmg = p.act == "punch" ? p.cmb >= 3 ? 9 : 5 : 8;
+        if (Math.abs(m.x - p.x) < rng2 && Math.abs(m.y - p.y) < 2.5 && m.act != "ko") {
+          f3HitM(W2, dmg, p.act == "kick" ? 0.35 : 0.15);
+        } else f3Snd(260, 0.06, "triangle");
+      }
+    }
+    if (p.at >= dur) {
+      p.act = "idle";
+      p.at = 0;
+    }
+  } else {
+    const blocking = k.B && onG;
+    p.act = blocking ? "block" : onG ? "idle" : "jump";
+    if (!blocking) {
+      let mv = 0;
+      if (k.L) mv -= 1;
+      if (k.R) mv += 1;
+      p.x += mv * 0.075;
+      p.walk = mv ? p.walk + 0.25 : 0;
+      if (mv && onG) p.act = "walk";
+      if (kp.U && onG) {
+        p.vy = 0.3;
+        f3Snd(330, 0.12, "square", 300);
+      }
+      if (kp.P) {
+        p.act = "punch";
+        p.at = 0;
+        p.cmb = p.cmbT > 0 ? p.cmb + 1 : 1;
+        if (p.cmb > 3) p.cmb = 1;
+        p.cmbT = 34;
+        f3Snd(200, 0.06, "square", -80);
+      } else if (kp.K) {
+        p.act = "kick";
+        p.at = 0;
+        f3Snd(170, 0.08, "square", -60);
+      } else if (kp.S) {
+        if (p.meter >= 100) {
+          p.meter = 0;
+          p.act = "special";
+          p.at = 0;
+          f3Msg("🌈 JURUS PELANGI!");
+          setTimeout(() => {
+            if (W2.ph == "fight") f3Msg("");
+          }, 900);
+        } else {
+          f3Msg("", "Jurus belum penuh — pukul monster dulu!");
+          setTimeout(() => {
+            if (W2.ph == "fight") f3Msg("");
+          }, 1100);
+        }
+      }
+    }
+  }
+  p.vy -= 0.016;
+  p.y += p.vy;
+  if (p.y < 0) {
+    p.y = 0;
+    p.vy = 0;
+  }
+  p.x = Math.max(-9.5, Math.min(9.5, p.x));
+  const gap = 0.5 + f3MW(W2);
+  if (Math.abs(p.x - m.x) < gap && p.y < 2.2 && m.act != "ko" && !(m.act == "atk" && m.atk && m.atk.k == "charge")) {
+    p.x = m.x - (m.x > p.x ? 1 : -1) * gap;
+  }
+  W2.kp = {};
+  if (m.hurtT > 0) m.hurtT--;
+  if (m.hitsT > 0) m.hitsT--;
+  else m.hits = 0;
+  const dx = p.x - m.x, ad = Math.abs(dx);
+  if (m.act == "ko") {
+  } else if (m.stun > 0) {
+    m.stun--;
+    m.act = "stun";
+    if (m.stun == 0) m.act = "idle";
+  } else if (m.act == "tele") {
+    m.at++;
+    if (m.at == 1) {
+      m.f = dx > 0 ? 1 : -1;
+    }
+    if (m.at >= m.atk.tele) {
+      m.act = "atk";
+      m.at = 0;
+      f3AtkStart(W2);
+    }
+  } else if (m.act == "atk") {
+    m.at++;
+    f3AtkStep(W2);
+  } else {
+    m.f = dx > 0 ? 1 : -1;
+    m.think--;
+    const want = m.atk0 || "swipe", reach = f3MW(W2) + 1.4;
+    if (m.think <= 0) {
+      const list = M.at;
+      const pick = list[Math.floor(Math.random() * list.length)];
+      m.atk0 = pick;
+      const melee = pick == "swipe";
+      if (!melee || ad < reach + 0.3) {
+        m.atk = f3AtkDef(W2, pick);
+        m.act = "tele";
+        m.at = 0;
+        f3Snd(140, 0.3, "sawtooth", -60);
+        m.think = Math.max(40, 95 - f3Idx() * 7 - Math.random() * 25);
+      } else m.think = 10;
+    } else if (ad > reach && want == "swipe") {
+      m.x += Math.sign(dx) * M.spd;
+      m.walk += 0.12;
+      m.act = "walk";
+    } else {
+      m.act = "idle";
+    }
+  }
+  m.vy -= 0.016;
+  m.y += m.vy;
+  if (m.y < 0) {
+    if (m.vy < -0.2 && m.act == "atk" && m.atk && m.atk.k == "stomp") f3Quake(W2);
+    m.y = 0;
+    m.vy = 0;
+  }
+  m.x = Math.max(-9, Math.min(9, m.x));
+  for (const e of W2.fx) {
+    e.life--;
+    if (e.k == "ball") {
+      e.x += e.vx;
+      if (e.own == "p") {
+        if (Math.abs(e.x - m.x) < f3MW(W2) + 0.3 && m.act != "ko") {
+          f3HitM(W2, e.dmg, 0.5);
+          f3Spark(W2, e.x, e.y, 16766464, 16);
+          e.life = 0;
+        }
+      } else {
+        if (Math.abs(e.x - p.x) < 0.45 && Math.abs(e.y - (p.y + 1)) < 0.75) {
+          f3HitP(W2, e.dmg);
+          e.life = 0;
+        }
+      }
+      if (Math.abs(e.x) > 12) e.life = 0;
+    } else if (e.k == "wave") {
+      e.x += e.vx;
+      if (!e.hit && Math.abs(e.x - p.x) < 0.45 && p.y < 0.45) {
+        e.hit = 1;
+        f3HitP(W2, e.dmg);
+      }
+    } else if (e.k == "spark") {
+      e.x += e.vx;
+      e.y += e.vy;
+      e.vy -= 8e-3;
+    }
+  }
+  W2.fx = W2.fx.filter((e) => e.life > 0);
+  if (p.meter < 100 && W2.t % 30 == 0) p.meter = Math.min(100, p.meter + 1);
+  if (m.hp <= 0 && m.act != "ko") {
+    m.act = "ko";
+    m.hp = 0;
+    W2.ph = "end";
+    W2.pt = 0;
+    W2.win = 1;
+    f3Win(W2);
+  } else if (p.hp <= 0 && W2.ph == "fight") {
+    p.hp = 0;
+    p.act = "ko";
+    W2.ph = "end";
+    W2.pt = 0;
+    W2.win = 0;
+    f3Lose(W2);
+  }
+  f3Anim(W2);
+}
+function f3MW(W2) {
+  return { lizard: 1.1, dragon: 1.1, tri: 1.2, gorilla: 1.2, crab: 1.4, robot: 0.9, octo: 1.2, wolf: 1.3 }[W2.M.k] * (1 + f3Idx() * 0.06);
+}
+function f3AtkDef(W2, k) {
+  const D = W2.M.dmg * (1 + ((W2.lv || 1) - 1) * 8e-3), i = f3Idx();
+  return {
+    swipe: { k, tele: Math.max(22, 40 - i * 2), dur: 18, dmg: D },
+    breath: { k, tele: Math.max(26, 44 - i * 2), dur: 24, dmg: D * 0.9 },
+    stomp: { k, tele: Math.max(28, 46 - i * 2), dur: 50, dmg: D },
+    charge: { k, tele: Math.max(24, 40 - i * 2), dur: 70, dmg: D * 1.1 },
+    beam: { k, tele: Math.max(30, 48 - i * 2), dur: 40, dmg: D * 0.8 },
+    howl: { k, tele: 30, dur: 40, dmg: D * 0.8 }
+  }[k];
+}
+function f3AtkStart(W2) {
+  const m = W2.m, a = m.atk, p = W2.p;
+  if (a.k == "breath") {
+    W2.fx.push({ k: "ball", own: "m", x: m.x + m.f * (f3MW(W2) + 0.3), y: 1.15, vx: m.f * (0.12 + f3Idx() * 8e-3), dmg: a.dmg, life: 150, col: new THREE.Color(W2.M.bc).getHex(), big: 1 });
+    f3Snd(150, 0.5, "sawtooth", -90);
+  } else if (a.k == "stomp") {
+    m.vy = 0.36;
+    f3Snd(110, 0.3, "square", 200);
+  } else if (a.k == "howl") {
+    f3Quake(W2);
+    f3Snd(500, 0.8, "sawtooth", -300);
+  } else if (a.k == "charge") {
+    m.vx = m.f * (0.2 + f3Idx() * 0.01);
+    f3Snd(90, 0.6, "sawtooth", 60);
+  } else if (a.k == "beam") {
+    W2.fx.push({ k: "beam", x0: m.x + m.f * 0.9, f: m.f, y: 1, life: a.dur, col: new THREE.Color(W2.M.bc).getHex() });
+    f3Snd(1200, 0.7, "sawtooth", -900);
+  } else if (a.k == "swipe") {
+    f3Snd(180, 0.15, "sawtooth", -120);
+  }
+}
+function f3AtkStep(W2) {
+  const m = W2.m, a = m.atk, p = W2.p, dx = p.x - m.x;
+  if (a.k == "swipe") {
+    if (m.at == 5 && Math.abs(dx) < f3MW(W2) + 1.5 && p.y < 1.6 && Math.sign(dx) == m.f) f3HitP(W2, a.dmg);
+  } else if (a.k == "charge") {
+    m.x += m.vx;
+    m.walk += 0.4;
+    if (!a.hit && Math.abs(p.x - m.x) < f3MW(W2) + 0.3 && p.y < 1.7) {
+      a.hit = 1;
+      f3HitP(W2, a.dmg);
+    }
+    if (Math.abs(m.x) >= 9 || m.at > a.dur) {
+      m.at = a.dur;
+    }
+  } else if (a.k == "beam") {
+    const b = W2.fx.find((e) => e.k == "beam");
+    if (b) {
+      b.x0 = m.x + m.f * 0.9;
+      const inLine = (p.x - b.x0) * b.f > 0;
+      if (inLine && p.y < 0.85 && m.at % 10 == 5) f3HitP(W2, a.dmg * 0.4);
+    }
+  }
+  if (m.at >= a.dur) {
+    m.act = "idle";
+    m.at = 0;
+    m.vx = 0;
+  }
+}
+function f3Quake(W2) {
+  const m = W2.m, a = m.atk || { dmg: W2.M.dmg };
+  W2.sh = 14;
+  for (const s of [-1, 1]) W2.fx.push({ k: "wave", x: m.x + s * f3MW(W2), vx: s * 0.17, life: 70, dmg: a.dmg, hit: 0 });
+  f3Snd(80, 0.4, "square", -40);
+}
+function f3HitM(W2, dmg, kb) {
+  const m = W2.m, p = W2.p;
+  if (m.act == "ko") return;
+  const crit = m.act == "stun" ? 1.5 : 1;
+  m.hp -= dmg * crit;
+  m.hurtT = 8;
+  m.hits++;
+  m.hitsT = 70;
+  p.meter = Math.min(100, p.meter + (dmg >= 20 ? 0 : 9));
+  W2.hitStop = 3;
+  m.x += Math.sign(m.x - p.x) * kb;
+  f3Spark(W2, m.x - Math.sign(m.x - p.x) * f3MW(W2) * 0.7, 1.6 + Math.random(), 16777215, 8);
+  f3Snd(140 + Math.random() * 60, 0.08, "square", -60);
+  if (m.hits >= 5 && m.stun <= 0 && m.act != "atk") {
+    m.stun = 90;
+    m.hits = 0;
+    m.act = "stun";
+    f3Msg("", "💫 Monster pusing! Serang sekarang!");
+    setTimeout(() => {
+      if (W2.ph == "fight") f3Msg("");
+    }, 1200);
+  }
+  if (m.act == "tele" && dmg >= 8 && Math.random() < 0.35) {
+    m.act = "idle";
+    m.think = 30;
+  }
+}
+function f3HitP(W2, dmg) {
+  const p = W2.p;
+  if (p.inv > 0 || p.act == "ko") return;
+  const bl = p.act == "block";
+  p.hp -= bl ? dmg * 0.2 : dmg;
+  p.inv = bl ? 14 : 50;
+  W2.sh = bl ? 4 : 10;
+  if (!bl) {
+    p.act = "hurt";
+    p.hurtT = 22;
+    p.vy = 0.12;
+    p.x -= p.f * 0.6;
+    p.meter = Math.min(100, p.meter + 6);
+    f3Snd(400, 0.3, "sawtooth", -300);
+  } else f3Snd(700, 0.08, "triangle");
+  f3Spark(W2, p.x, p.y + 1, bl ? 4244735 : 16732754, 8);
+}
+function f3Win(W2) {
+  const lv = W2.lv, c = 15 + lv * 2;
+  f3Msg("🏆 MENANG! 🏆", W2.M.n + " kalah!\n💰 +" + c + " koin   💎 +1 permata");
+  try {
+    addCoin(c);
+    coinN += c;
+    BANK.g = (BANK.g || 0) + 1;
+    bankDirty = 1;
+    score += 2e3;
+    stat("monWins", 1);
+    petXP(10);
+  } catch (e) {
+  }
+  try {
+    SFX.win();
+  } catch (e) {
+  }
+  const ov = F3.ov;
+  setTimeout(() => {
+    if (F3.ov !== ov) return;
+    const d = document.createElement("div");
+    d.className = "f3end";
+    d.innerHTML = '<button type="button">▶ Lanjut Petualangan</button>';
+    d.firstChild.onclick = () => f3Exit(true);
+    ov.appendChild(d);
+  }, 1400);
+}
+function f3Lose(W2) {
+  f3Msg("😵 Kamu kalah...", "Jangan menyerah! Pakai 🛡 Tangkis & lompati serangan monster.");
+  try {
+    SFX.hurt();
+  } catch (e) {
+  }
+  const ov = F3.ov;
+  setTimeout(() => {
+    if (F3.ov !== ov) return;
+    const d = document.createElement("div");
+    d.className = "f3end";
+    d.innerHTML = '<button type="button">🔁 Coba Lagi</button><button type="button" class="o">✕ Keluar</button>';
+    d.children[0].onclick = () => {
+      d.remove();
+      f3Retry();
+    };
+    d.children[1].onclick = () => f3Exit(false);
+    ov.appendChild(d);
+  }, 1200);
+}
+function f3Retry() {
+  const W2 = F3.W;
+  if (!W2) return;
+  Object.assign(W2.p, { x: -4, y: 0, vy: 0, hp: 100, act: "idle", at: 0, inv: 60, meter: 30, hurtT: 0 });
+  Object.assign(W2.m, { x: 4, y: 0, vy: 0, hp: W2.m.max, act: "idle", at: 0, think: 90, stun: 0, hits: 0, vx: 0 });
+  W2.fx.length = 0;
+  W2.ph = "intro";
+  W2.pt = 60;
+  f3Msg("Ronde 2 ⚔️", "Kamu pasti bisa!");
+}
+function f3Anim(W2) {
+  const p = W2.p, m = W2.m, H2 = F3.H3, MO = F3.MO;
+  if (!H2 || !MO) return;
+  const u = H2.userData, t = W2.t;
+  H2.position.set(p.x, p.y, 0);
+  H2.rotation.y = p.f > 0 ? 0.55 : -0.55;
+  let la = 0, ra = 0, ll = 0, rl = 0, bob = Math.sin(t * 0.08) * 0.03;
+  if (p.act == "walk") {
+    ll = Math.sin(p.walk) * 0.6;
+    rl = -ll;
+    la = -ll * 0.6;
+    ra = ll * 0.6;
+  } else if (p.act == "jump") {
+    ll = 0.5;
+    rl = -0.3;
+    la = -2.4;
+    ra = -2.4;
+  } else if (p.act == "punch") {
+    const k = Math.sin(Math.min(1, p.at / 7) * Math.PI);
+    p.cmb % 2 ? ra = -1.6 * k - 0.1 : la = -1.6 * k - 0.1;
+  } else if (p.act == "kick") {
+    const k = Math.sin(Math.min(1, p.at / 11) * Math.PI);
+    rl = -1.5 * k;
+    la = -0.6;
+    ra = 0.4;
+  } else if (p.act == "block") {
+    la = -1.3;
+    ra = -1.3;
+  } else if (p.act == "special") {
+    la = ra = -2.8 + Math.sin(t * 0.5) * 0.2;
+  } else if (p.act == "hurt") {
+    la = ra = 0.8;
+    bob = 0.05;
+  } else if (p.act == "ko") {
+    la = ra = -2.9;
+  }
+  const s = p.f;
+  u.aL.rotation.set(0, 0, -la * s);
+  u.aR.rotation.set(0, 0, -ra * s);
+  u.lL.rotation.set(0, 0, -ll * s);
+  u.lR.rotation.set(0, 0, -rl * s);
+  H2.rotation.z = p.act == "ko" ? Math.min(1.5, W2.pt * 0.05) * -s : 0;
+  u.body.position.y = 0.92 + bob;
+  u.head.position.y = 1.62 + bob;
+  u.shield.visible = p.act == "block";
+  u.sh.position.y = 0.01 - p.y;
+  const fl = p.inv > 0 && p.act != "block" && Math.floor(t / 4) % 2 == 0;
+  H2.visible = !fl || p.hp <= 0;
+  const mu = MO.userData;
+  MO.position.set(m.x, m.y, 0);
+  MO.rotation.y = m.f > 0 ? 0 : Math.PI;
+  const tele = m.act == "tele", atk = m.act == "atk", sw2 = Math.sin(m.walk || 0);
+  mu.legs.forEach((l, i) => {
+    l.rotation.z = m.act == "walk" || atk && m.atk.k == "charge" ? sw2 * (i % 2 ? 0.5 : -0.5) : 0;
+  });
+  mu.arms.forEach((a, i) => {
+    let r = Math.sin(t * 0.06 + i) * 0.08;
+    if (tele && m.atk.k == "swipe") r = -2.2 * Math.min(1, m.at / 12);
+    if (atk && m.atk.k == "swipe") r = 1.2;
+    if (m.act == "stun") r = 0.6;
+    a.rotation.z = (W2.M.k == "crab" ? 1.2 : 0) + r;
+  });
+  mu.heads.forEach((h, i) => {
+    h.rotation.z = tele && (m.atk.k == "breath" || m.atk.k == "beam" || m.atk.k == "howl") ? 0.35 : Math.sin(t * 0.05 + i) * 0.08;
+    if (m.act == "stun") h.rotation.x = Math.sin(t * 0.2) * 0.3;
+  });
+  if (mu.jaw) mu.jaw.rotation.z = tele || atk ? -0.35 : 0;
+  mu.wings.forEach((w) => {
+    w.o.rotation.x = w.s * (0.6 + Math.sin(t * 0.15) * 0.35);
+  });
+  if (W2.M.k == "octo") mu.tent.forEach((tt, i) => {
+    tt.arr.forEach((s2, j) => {
+      const r = 1 + j * 0.32, a = tt.a + Math.sin(t * 0.06 + j * 0.6 + i) * 0.25 * (j + 1) * 0.3;
+      s2.position.set(Math.cos(a) * r * 0.75, 1.8 - j * 0.32 + Math.sin(t * 0.08 + i + j) * 0.1, Math.sin(a) * r * 0.75);
+      if (atk && m.atk.k == "swipe" && (i == 0 || i == 1)) s2.position.x += j * 0.55;
+    });
+  });
+  else mu.tent.forEach((tt) => {
+    tt.o.position.y = tt.by + Math.sin(t * 0.1 + tt.i) * 0.1;
+    tt.o.position.z = Math.sin(t * 0.08 + tt.i * 0.7) * 0.15;
+  });
+  MO.rotation.z = m.act == "ko" ? Math.min(1.4, W2.pt * 0.03) * (m.f > 0 ? 1 : -1) : 0;
+  const glow = tele && Math.floor(t / 5) % 2 == 0 ? 6689024 : m.hurtT > 0 ? 7829367 : 0;
+  mu.mats.forEach((x) => x.emissive.setHex(glow));
+  MO.position.y = m.y + (m.act == "stun" ? Math.abs(Math.sin(t * 0.2)) * 0.05 : 0);
+}
+function f3Render(W2) {
+  const R = F3.R, S = F3.S, cam2 = F3.cam;
+  if (!R) return;
+  const p = W2.p, m = W2.m;
+  if (!F3.fxG) {
+    F3.fxG = new THREE.Group();
+    S.add(F3.fxG);
+    F3.geoS = new THREE.SphereGeometry(1, 10, 8);
+    F3.pool = {};
+  }
+  const G2 = F3.fxG;
+  while (G2.children.length) G2.remove(G2.children[0]);
+  const mat = (c) => F3.pool[c] || (F3.pool[c] = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9 }));
+  for (const e of W2.fx) {
+    if (e.k == "ball") {
+      const o = new THREE.Mesh(F3.geoS, mat(e.col));
+      const r = e.big ? 0.42 : 0.32;
+      o.scale.set(r * (1 + Math.sin(W2.t * 0.5) * 0.1), r, r);
+      o.position.set(e.x, e.y, 0);
+      G2.add(o);
+      const o2 = new THREE.Mesh(F3.geoS, mat(16777215));
+      o2.scale.set(r * 0.5, r * 0.5, r * 0.5);
+      o2.position.set(e.x, e.y, 0);
+      G2.add(o2);
+    } else if (e.k == "wave") {
+      for (let i = 0; i < 3; i++) {
+        const o = new THREE.Mesh(F3.geoS, mat(W2.M.bc ? new THREE.Color(W2.M.bc).getHex() : 16777215));
+        o.scale.set(0.35, 0.3 - i * 0.08, 0.6);
+        o.position.set(e.x - Math.sign(e.vx) * i * 0.35, 0.15, 0);
+        G2.add(o);
+      }
+    } else if (e.k == "spark") {
+      const o = new THREE.Mesh(F3.geoS, mat(e.col));
+      const r = 0.07 * e.life / 24 + 0.02;
+      o.scale.set(r, r, r);
+      o.position.set(e.x, e.y, e.z);
+      G2.add(o);
+    } else if (e.k == "beam") {
+      const len = 12;
+      const o = new THREE.Mesh(F3.geoS, mat(e.col));
+      o.scale.set(len / 2, 0.18 + Math.sin(W2.t * 0.6) * 0.04, 0.18);
+      o.position.set(e.x0 + e.f * len / 2, e.y, 0);
+      G2.add(o);
+    }
+  }
+  if (m.act == "tele") {
+    const o = new THREE.Mesh(F3.geoS, mat(16717636));
+    o.scale.set(0.22, 0.22, 0.22);
+    o.position.set(m.x, 5.2 * (1 + f3Idx() * 0.06), 0);
+    G2.add(o);
+  }
+  const mid = (p.x + m.x) / 2, sep = Math.abs(p.x - m.x), asp = cam2.aspect;
+  const dist = Math.max(9, (sep + 4.5) / Math.max(0.6, asp) * (asp < 1 ? 0.95 : 1.1) + 3.5);
+  if (F3.S.fog) {
+    F3.S.fog.near = dist + 3;
+    F3.S.fog.far = dist + 34;
+  }
+  let sx = 0, sy = 0;
+  if (W2.sh > 0) {
+    W2.sh--;
+    sx = (Math.random() - 0.5) * 0.25;
+    sy = (Math.random() - 0.5) * 0.2;
+  }
+  cam2.position.set(mid * 0.85 + sx, 2.6 + dist * 0.12 + sy, dist);
+  cam2.lookAt(mid * 0.85, 1.9, 0);
+  R.render(S, cam2);
+  const hp = document.getElementById("f3hpP"), hm = document.getElementById("f3hpM"), mt = document.getElementById("f3mt"), sb = document.getElementById("f3sb");
+  if (hp) hp.style.width = Math.max(0, p.hp) + "%";
+  if (hm) hm.style.width = Math.max(0, m.hp / m.max * 100) + "%";
+  if (mt) mt.style.width = p.meter + "%";
+  if (sb) sb.classList.toggle("full", p.meter >= 100);
+}
 let FWG = [], FW = null, FWf = 360, FWyH = 175, FWch = 1.5;
 const FWRW = 3, FWPD = 3.2, FWDF = 72, FWDN = 1;
 const FWNAME = { hutan: "Hutan kiri-kanan 🌳", kebun: "Kebun kiri-kanan 🌻", sungai: "Sungai kiri-kanan 🏞️", gurun: "Gurun kiri-kanan 🌵", desa: "Desa kiri-kanan 🏡", kastil: "Lorong kastil 🏰", salju: "Hutan salju ❄️", lava: "Sungai lava kiri-kanan 🌋", langit: "Jalan pelangi di awan ☁️", gua: "Lorong gua kristal 💎", dino: "Hutan purba & dinosaurus 🐉" };
@@ -5362,6 +6695,7 @@ function startLevel(n) {
   gen(n);
   fixClimb();
   fwPlace();
+  f3Place();
   cpX = 3 * T;
   cpList = helpers.map((h) => h.x - T).concat([checkpoint]);
   spawn();
@@ -5483,7 +6817,14 @@ function update() {
     fwUpdate();
     return;
   }
-  if (state == "play") fwCheck();
+  if (state == "f3d") return;
+  if (state == "play") {
+    fwCheck();
+    try {
+      f3Check();
+    } catch (e) {
+    }
+  }
   document.body.classList.toggle("instory", state == "story");
   try {
     coopTick();
@@ -13710,6 +15051,10 @@ function drawPortals2() {
     fwGateDraw();
   } catch (e) {
   }
+  try {
+    f3PortalDraw();
+  } catch (e) {
+  }
   drawSigns();
   drawMission();
   if (!room && portals && portals.tree) {
@@ -16134,6 +17479,7 @@ function draw() {
     fwDraw();
     return;
   }
+  if (state == "f3d") return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const sky = ctx.createLinearGradient(0, 0, 0, 480);
   const th = THEMES[(level - 1) % THEMES.length];
@@ -16924,7 +18270,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
