@@ -3625,6 +3625,413 @@ function f3Render(W2) {
   if (mt) mt.style.width = p.meter + "%";
   if (sb) sb.classList.toggle("full", p.meter >= 100);
 }
+const QK = { next: 0, warn: 0, cracks: [], back: null, rk: [], cr: [], rt: 0, lv: 0 };
+function qkReset() {
+  QK.cracks = [];
+  QK.back = null;
+  QK.rk = [];
+  QK.cr = [];
+  QK.warn = 0;
+  QK.next = Math.round(60 * (18 + Math.random() * 25));
+  QK.lv = level;
+}
+function qkGap() {
+  return Math.round(60 * (32 + Math.random() * 40) * (1 - Math.min(0.4, (level || 1) * 0.013)));
+}
+function qkFreeAt(x, w) {
+  if (x < 14 || x + w >= W - 2) return false;
+  if (arena && x * T > arena.x0 - 20 * T) return false;
+  for (let i = -1; i <= w; i++) {
+    const q = x + i;
+    if (G[13][q] != 1 || G[14][q] != 1) return false;
+    for (let y = 10; y < 13; y++) if (G[y][q] && solid(G[y][q])) return false;
+  }
+  const near = (px, d) => px + d >= x && px - d <= x + w;
+  if (helpers.some((h) => near(h.x / T, 5)) || signs.some((s) => near(s.x / T, 3)) || keys.some((k) => near(k.x / T, 9))) return false;
+  if (cpList.some((c) => near(c / T, 3))) return false;
+  if (FWG.some((g) => near(g.x + 2, 6))) return false;
+  if (F3G && near(F3G.x + 2, 5)) return false;
+  if (portals) for (const k in portals) {
+    const p = portals[k];
+    if (p && (near(p.x, 6) || p.ex && near(p.ex, 5))) return false;
+  }
+  if (MPR.some((m) => near(m[0], 2) || near(m[1], 2))) return false;
+  return true;
+}
+function qkStart() {
+  QK.warn = 110;
+  parts.push({ k: "txt", s: "⚠️ GEMPA BUMI! Awas tanah terbelah!", x: P.x + 12, y: P.y - 70, life: 120 });
+  try {
+    snd(55, 1.8, "sawtooth", 25);
+    setTimeout(() => snd(45, 1.2, "square", -10), 500);
+  } catch (e) {
+  }
+}
+function qkOpen() {
+  const tx = Math.floor((P.x + 12) / T), f = P.face || 1, w = 3 + ((level || 1) > 10 ? 1 : 0) + (Math.random() < 0.3 ? 1 : 0);
+  const offs = Math.random() < 0.4 ? [-1, 0, 1, -2, 2] : [4, 5, 6, 7, 8, 9, 10];
+  offs.sort(() => Math.random() - 0.5);
+  for (const o of offs.concat([3, 11, 12, -3])) {
+    const x = f > 0 ? tx + o : tx - o - w + 1;
+    if (qkFreeAt(x, w)) {
+      const c = { x, w, t: 0, life: Math.round(60 * (7 + Math.random() * 3)), open: 1 };
+      for (let i = 0; i < w; i++) {
+        G[13][x + i] = 0;
+        G[14][x + i] = 0;
+      }
+      coins = coins.filter((k) => k.x < x * T - 8 || k.x > (x + w) * T + 8);
+      QK.cracks.push(c);
+      shakeT = Math.max(shakeT, 24);
+      for (let i = 0; i < 26; i++) parts.push({ k: "dust", c: ["#8d6e63", "#6d4c41", "#a1887f", "#4e342e"][i % 4], x: (x + Math.random() * w) * T, y: 13 * T, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 6, life: 34, r: 3 + Math.random() * 3 });
+      try {
+        snd(90, 0.6, "sawtooth", -60);
+      } catch (e) {
+      }
+      return true;
+    }
+  }
+  return false;
+}
+function qkClose(c, force) {
+  if (!c.open) return;
+  const inGap = P && !room && P.x + P.w > c.x * T && P.x < (c.x + c.w) * T && P.y + P.h > 13 * T - 2;
+  if (inGap && !force) return;
+  for (let i = 0; i < c.w; i++) {
+    G[13][c.x + i] = 1;
+    G[14][c.x + i] = 1;
+  }
+  c.open = 0;
+  for (let i = 0; i < 14; i++) parts.push({ k: "dust", c: "#a1887f", x: (c.x + Math.random() * c.w) * T, y: 13 * T, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 26, r: 3 });
+}
+function qkUpdate() {
+  if (!P) return;
+  if (QK.lv !== level) qkReset();
+  if (room == "quake") {
+    qkRoomUpdate();
+    return;
+  }
+  for (const c of QK.cracks) {
+    if (!c.open) continue;
+    c.t++;
+    if (c.t > c.life) qkClose(c);
+    if (state == "play" && !room && P.x + 12 > c.x * T - 2 && P.x + 12 < (c.x + c.w) * T + 2 && P.y > 13 * T + 14) {
+      qkEnter(c);
+      return;
+    }
+  }
+  QK.cracks = QK.cracks.filter((c) => c.open || c.t < c.life + 5);
+  if (room || state != "play" || storyQ) return;
+  if (arena && P.x > arena.x0 - 22 * T) return;
+  if (QK.warn > 0) {
+    QK.warn--;
+    shakeT = Math.max(shakeT, QK.warn > 30 ? 7 : 4);
+    if (tick % 3 == 0) parts.push({ k: "dust", c: "#bcaaa4", x: cam + Math.random() * VW, y: -10, vx: 0, vy: 3 + Math.random() * 2, life: 45, r: 2 + Math.random() * 2 });
+    if (QK.warn == 0) {
+      QK.next = qkOpen() ? qkGap() : 600;
+    }
+    return;
+  }
+  if (--QK.next <= 0) qkStart();
+}
+function qkDraw() {
+  if (room == "quake") {
+    qkRoomDraw();
+    return;
+  }
+  if (room) return;
+  for (const c of QK.cracks) {
+    if (!c.open) continue;
+    const x0 = c.x * T, x1 = (c.x + c.w) * T;
+    if (x1 < cam - 40 || x0 > cam + VW + 40) continue;
+    const k = Math.min(1, c.t / 20);
+    ctx.save();
+    const g = ctx.createLinearGradient(0, 13 * T, 0, H * T);
+    g.addColorStop(0, "#3e2723");
+    g.addColorStop(0.5, "#1a0f0a");
+    g.addColorStop(1, "#ff6d00");
+    ctx.fillStyle = g;
+    ctx.fillRect(x0, 13 * T, x1 - x0, H * T - 13 * T);
+    ctx.fillStyle = "#4e342e";
+    for (const [ex, s] of [[x0, 1], [x1, -1]]) {
+      ctx.beginPath();
+      ctx.moveTo(ex, 13 * T);
+      for (let i = 0; i <= 8; i++) ctx.lineTo(ex + s * (6 + (i * 37 + c.x) % 9) * k, 13 * T + i * 8);
+      ctx.lineTo(ex, H * T);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 0.4 + Math.sin(tick * 0.2) * 0.15;
+    ctx.fillStyle = "#ff9100";
+    ctx.fillRect(x0 + 6, H * T - 10, x1 - x0 - 12, 10);
+    ctx.globalAlpha = 1;
+    if (c.life - c.t < 90 && Math.floor(tick / 8) % 2) {
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 12px Fredoka";
+      ctx.textAlign = "center";
+      ctx.fillText("Retakan menutup...", (x0 + x1) / 2, 13 * T - 8);
+    }
+    ctx.restore();
+  }
+}
+function qkBuild() {
+  const n = level || 1, r = rng(5e3 + n * 71 + Math.floor(Math.random() * 999)), W2 = 62, g = [];
+  for (let y = 0; y < H; y++) g.push(new Array(W2).fill(0));
+  const e2 = [], c2 = [];
+  QK.cr = [];
+  QK.rk = [];
+  QK.rt = 60;
+  for (let x2 = 0; x2 < W2; x2++) {
+    g[13][x2] = 6;
+    g[14][x2] = 6;
+    g[0][x2] = 6;
+    if (r() < 0.25) g[1][x2] = 6;
+  }
+  for (let y = 0; y < 15; y++) {
+    g[y][0] = 6;
+    g[y][W2 - 1] = 6;
+  }
+  const hx = W2 - 6;
+  for (let x2 = hx; x2 < hx + 4; x2++) {
+    g[0][x2] = 0;
+    g[1][x2] = 0;
+  }
+  let x = 5, row = 11;
+  const rows = [11, 9, 10, 8, 6, 7, 5, 6, 4];
+  let ri = 0;
+  while (x < hx - 4 && ri < rows.length) {
+    row = rows[ri++];
+    const len = 3 + Math.floor(r() * 2), crumb = ri > 2 && r() < 0.45;
+    for (let i = 0; i < len; i++) {
+      g[row][x + i] = crumb ? 18 : 6;
+      if (crumb) QK.cr.push({ x: x + i, y: row, t: 0, gone: 0 });
+      c2.push({ x: (x + i) * T + 16, y: (row - 1) * T + 16, t: i });
+    }
+    if (r() < 0.5 && row < 10) e2.push(mkBat((x + len) * T, (row - 2) * T));
+    x += len + 2 + Math.floor(r() * 2);
+  }
+  for (let i = x; i < W2 - 1; i++) g[4][i] = 6;
+  for (let i = hx; i < hx + 4; i++) g[4][i] = 6;
+  for (let i = 0; i < 3; i++) c2.push({ x: (hx + i) * T + 16, y: 3 * T, t: i });
+  for (let i = 0; i < 2 + Math.floor(n / 8); i++) e2.push(mkFoe(r() < 0.5 ? "slime" : "hedge", (14 + i * 14) * T, 13 * T));
+  QK.hole = hx;
+  return { g, W2, e2, c2 };
+}
+function qkEnter(c) {
+  stat("quakeFall", 1);
+  shots = [];
+  const R2 = qkBuild();
+  mainS = { G, W, ents, coins, keys, cage, bosses, helpers, cpList, flagX };
+  room = "quake";
+  G = R2.g;
+  W = R2.W2;
+  ents = R2.e2;
+  coins = R2.c2;
+  gems = [];
+  keys = [];
+  cage = null;
+  bosses = [];
+  helpers = [];
+  cpList = [];
+  flagX = 1e9;
+  QK.back = c;
+  P.x = 3 * T;
+  P.y = 6 * T;
+  P.vx = 0;
+  P.vy = 2;
+  cam = 0;
+  P.inv = Math.max(P.inv, 60);
+  try {
+    musPlay("mystic", -5);
+  } catch (e) {
+  }
+  fadeT = 24;
+  shakeT = 20;
+  parts.push({ k: "txt", s: "🌋 Jatuh ke Jurang Gempa! Panjat naik ke lubang cahaya ⬆", x: P.x + 190, y: 7 * T, life: 170 });
+  petReset();
+}
+function qkExit() {
+  const S = mainS;
+  if (!S) return;
+  G = S.G;
+  W = S.W;
+  ents = S.ents;
+  coins = S.coins;
+  keys = S.keys;
+  cage = S.cage;
+  bosses = S.bosses;
+  helpers = S.helpers;
+  cpList = S.cpList;
+  flagX = S.flagX;
+  room = null;
+  mainS = null;
+  gems = [];
+  try {
+    musPlay(PLV[level - 1][0], PLV[level - 1][1]);
+  } catch (e) {
+  }
+  fadeT = 24;
+  const c = QK.back;
+  QK.back = null;
+  if (c) qkClose(c, true);
+  let ex = c ? c.x + c.w + 1 : Math.floor(P.x / T);
+  for (let k = 0; k < 30; k++) {
+    if (G[13][ex] == 1 && !G[12][ex] && !G[11][ex]) break;
+    ex++;
+  }
+  P.x = ex * T;
+  P.y = 13 * T - P.h - 30;
+  P.vy = -9;
+  P.vx = 0;
+  P.pop = 1;
+  setTimeout(() => {
+    if (P) P.pop = 0;
+  }, 600);
+  shots = [];
+  petReset();
+  P.inv = Math.max(P.inv, 90);
+  cam = Math.max(0, Math.min(W * T - VW, P.x - VW * 0.4));
+  parts.push({ k: "txt", s: "⬆ Berhasil naik ke permukaan! +5 💰", x: P.x + 12, y: 8 * T, life: 110 });
+  score += 500;
+  addCoin(5);
+  coinN += 5;
+  try {
+    SFX.win();
+  } catch (e) {
+  }
+}
+function qkRoomUpdate() {
+  if (state != "play") return;
+  if (P.y < 2 * T && P.x + 12 > QK.hole * T && P.x + 12 < (QK.hole + 4) * T) {
+    qkExit();
+    return;
+  }
+  const fx = [Math.floor((P.x + 3) / T), Math.floor((P.x + P.w - 3) / T)], fy = Math.floor((P.y + P.h + 2) / T);
+  for (const q of QK.cr) {
+    if (q.gone) {
+      if (--q.gone <= 0) {
+        G[q.y][q.x] = 18;
+        q.t = 0;
+        q.gone = 0;
+      }
+      continue;
+    }
+    if (P.ground && fy == q.y && (fx[0] == q.x || fx[1] == q.x)) {
+      q.t++;
+      if (q.t % 6 == 0) parts.push({ k: "dust", c: "#a1887f", x: q.x * T + 16, y: q.y * T + T, vx: (Math.random() - 0.5) * 2, vy: 1, life: 20, r: 2 });
+    } else if (q.t > 0) q.t = Math.max(0, q.t - 1);
+    if (q.t > 32) {
+      G[q.y][q.x] = 0;
+      q.gone = 260;
+      q.t = 0;
+      try {
+        snd(140, 0.15, "triangle", -60);
+      } catch (e) {
+      }
+      for (let i = 0; i < 6; i++) parts.push({ k: "dust", c: "#8d6e63", x: q.x * T + 16, y: q.y * T + 16, vx: (Math.random() - 0.5) * 3, vy: Math.random() * 2, life: 26, r: 3 });
+    }
+  }
+  if (--QK.rt <= 0) {
+    QK.rt = Math.max(45, 110 - (level || 1) * 2) + Math.floor(Math.random() * 50);
+    const x = Math.max(2 * T, Math.min((W - 3) * T, P.x + 12 + (Math.random() * 260 - 60)));
+    QK.rk.push({ x, y: 1.5 * T, vy: 0, warn: 50, r: 10 + Math.random() * 6 });
+  }
+  for (const k of QK.rk) {
+    if (k.warn > 0) {
+      k.warn--;
+      continue;
+    }
+    k.vy = Math.min(9, k.vy + 0.35);
+    k.y += k.vy;
+    if (!k.hit && Math.abs(k.x - (P.x + 12)) < k.r + 10 && k.y + k.r > P.y && k.y - k.r < P.y + P.h) {
+      k.hit = 1;
+      k.dead = 1;
+      hurt();
+    }
+    const tt = G[Math.floor((k.y + k.r) / T)] && G[Math.floor((k.y + k.r) / T)][Math.floor(k.x / T)];
+    if (tt && k.y > 2 * T) {
+      k.dead = 1;
+      for (let i = 0; i < 8; i++) parts.push({ k: "dust", c: "#9e9e9e", x: k.x, y: k.y, vx: (Math.random() - 0.5) * 4, vy: -Math.random() * 3, life: 22, r: 3 });
+    }
+  }
+  QK.rk = QK.rk.filter((k) => !k.dead && k.y < H * T);
+}
+function qkRoomDraw() {
+  const hx = QK.hole * T;
+  ctx.save();
+  const g = ctx.createLinearGradient(0, 0, 0, 5 * T);
+  g.addColorStop(0, "rgba(255,248,200,.85)");
+  g.addColorStop(1, "rgba(255,248,200,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(hx, 0);
+  ctx.lineTo(hx + 4 * T, 0);
+  ctx.lineTo(hx + 5 * T, 5 * T);
+  ctx.lineTo(hx - T, 5 * T);
+  ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 13px Fredoka";
+  ctx.textAlign = "center";
+  ctx.fillText("⬆ Lubang keluar", hx + 2 * T, 3.4 * T + Math.sin(tick * 0.1) * 3);
+  for (const q of QK.cr) {
+    if (q.gone) continue;
+    const x = q.x * T, y = q.y * T;
+    ctx.strokeStyle = "rgba(40,20,10,.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 6);
+    ctx.lineTo(x + 14, y + 16);
+    ctx.lineTo(x + 10, y + 26);
+    ctx.moveTo(x + 20, y + 4);
+    ctx.lineTo(x + 24, y + 18);
+    ctx.stroke();
+    if (q.t > 0) {
+      ctx.globalAlpha = q.t / 40;
+      ctx.fillStyle = "#ff7043";
+      ctx.fillRect(x, y, T, 4);
+      ctx.globalAlpha = 1;
+    }
+  }
+  for (const k of QK.rk) {
+    if (k.warn > 0) {
+      const sh = (Math.random() - 0.5) * 3;
+      ctx.fillStyle = "rgba(0,0,0,.35)";
+      ctx.beginPath();
+      ctx.ellipse(k.x, 13 * T, k.r * (1 - k.warn / 60) + 4, 4, 0, 0, 7);
+      ctx.fill();
+      ctx.fillStyle = "#757575";
+      ctx.beginPath();
+      ctx.arc(k.x + sh, 1.5 * T, k.r, 0, 7);
+      ctx.fill();
+      continue;
+    }
+    const gr = ctx.createRadialGradient(k.x - 4, k.y - 4, 2, k.x, k.y, k.r);
+    gr.addColorStop(0, "#bdbdbd");
+    gr.addColorStop(1, "#424242");
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.arc(k.x, k.y, k.r, 0, 7);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function qkBg() {
+  const g = ctx.createLinearGradient(0, 0, 0, 480);
+  g.addColorStop(0, "#1b0f0a");
+  g.addColorStop(0.6, "#3e2723");
+  g.addColorStop(1, "#bf360c");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VW, 480);
+  ctx.globalAlpha = 0.25;
+  for (let i = 0; i < 7; i++) {
+    const x = ((i * 173 - cam * 0.3) % (VW + 200) + VW + 200) % (VW + 200) - 100;
+    ctx.fillStyle = "#ff6d00";
+    ctx.beginPath();
+    ctx.moveTo(x, 480);
+    ctx.lineTo(x + 18, 300 + i * 12);
+    ctx.lineTo(x + 36, 480);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
 let FWG = [], FW = null, FWf = 360, FWyH = 175, FWch = 1.5;
 const FWRW = 3, FWPD = 3.2, FWDF = 72, FWDN = 1;
 const FWNAME = { hutan: "Hutan kiri-kanan 🌳", kebun: "Kebun kiri-kanan 🌻", sungai: "Sungai kiri-kanan 🏞️", gurun: "Gurun kiri-kanan 🌵", desa: "Desa kiri-kanan 🏡", kastil: "Lorong kastil 🏰", salju: "Hutan salju ❄️", lava: "Sungai lava kiri-kanan 🌋", langit: "Jalan pelangi di awan ☁️", gua: "Lorong gua kristal 💎", dino: "Hutan purba & dinosaurus 🐉" };
@@ -6685,7 +7092,7 @@ function exitRoom(mode) {
   room = null;
   mainS = null;
   gems = [];
-  portals[was].used = 1;
+  if (portals[was]) portals[was].used = 1;
   musPlay(PLV[level - 1][0], PLV[level - 1][1]);
   fadeT = 24;
   if (mode == "die") return;
@@ -6971,6 +7378,7 @@ function startLevel(n) {
   fixClimb();
   fwPlace();
   f3Place();
+  qkReset();
   cpX = 3 * T;
   cpList = helpers.map((h) => h.x - T).concat(signs.map((s) => s.x - T), [checkpoint]).sort((a, b) => a - b);
   spawn();
@@ -7103,6 +7511,10 @@ function update() {
     fwCheck();
     try {
       f3Check();
+    } catch (e) {
+    }
+    try {
+      qkUpdate();
     } catch (e) {
     }
   }
@@ -11350,7 +11762,7 @@ function coopFollowRoom(r) {
     enterRoom(rr2);
     P.inv = Math.max(P.inv, 90);
     parts.push({ k: "txt", s: "👫 Ikut teman masuk ruang rahasia!", x: P.x + 150, y: 8.5 * T, life: 130 });
-  } else if (!rr2 && room && !r.dead) {
+  } else if (!rr2 && room && room != "quake" && !r.dead) {
     exitRoom();
     P.inv = Math.max(P.inv, 90);
     parts.push({ k: "txt", s: "👫 Keluar bersama teman!", x: P.x + 12, y: P.y - 40, life: 100 });
@@ -13144,7 +13556,7 @@ function lightPass() {
   let dk = 0, col = "10,12,35";
   if (F.tod == "night") dk = 0.42;
   if (F.tod == "sunset") dk = 0.12;
-  if (at == "cave" || room == "under" || room == "cave" || room == "treasure") dk = Math.max(dk, 0.58);
+  if (at == "cave" || room == "under" || room == "cave" || room == "treasure" || room == "quake") dk = Math.max(dk, 0.5);
   if (room == "star") dk = 0.3;
   if (at == "castle" && F.tod == "night") dk = 0.5;
   if (at == "lava") {
@@ -15328,6 +15740,10 @@ function drawDeco() {
   }
 }
 function drawPortals2() {
+  try {
+    qkDraw();
+  } catch (e) {
+  }
   try {
     fwGateDraw();
   } catch (e) {
@@ -17766,7 +18182,9 @@ function draw() {
   const th = THEMES[(level - 1) % THEMES.length];
   sky.addColorStop(0, th[0]);
   sky.addColorStop(1, th[1]);
-  if (room == "under") {
+  if (room == "quake") {
+    qkBg();
+  } else if (room == "under") {
     const ug = ctx.createLinearGradient(0, 0, 0, 480);
     ug.addColorStop(0, "#1a1030");
     ug.addColorStop(1, "#2d1b4e");
@@ -17947,7 +18365,7 @@ function draw() {
     } catch (e) {
     }
   } else {
-    ctx.fillStyle = room == "under" || room == "cave" || room == "treasure" || room == "star" || room == "ice" || room == "tree" ? "rgba(0,0,0,0)" : "#ffffffcc";
+    ctx.fillStyle = room == "under" || room == "cave" || room == "treasure" || room == "star" || room == "ice" || room == "tree" || room == "quake" ? "rgba(0,0,0,0)" : "#ffffffcc";
     for (let i = -1; i < (room == "sky" ? VW / 160 : VW / 260) + 2; i++) {
       const cx = i * 260 - cam * 0.15 % 260 + 60 + tick * 0.2 % 260, cy = 60 + i * 37 % 3 * 25;
       ctx.beginPath();
@@ -18551,7 +18969,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
