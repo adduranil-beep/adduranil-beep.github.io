@@ -2017,6 +2017,234 @@ function fixClimb() {
     return 0;
   }
 }
+const F3TX = {};
+function f3Hex(c) {
+  const x = new THREE.Color(c);
+  return [x.r * 255 | 0, x.g * 255 | 0, x.b * 255 | 0];
+}
+function f3Rng(seed) {
+  let s = seed >>> 0 || 1;
+  return () => {
+    s ^= s << 13;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    return (s >>> 0) % 1e5 / 1e5;
+  };
+}
+function f3SkinTex(kind, col) {
+  const key2 = kind + col;
+  if (F3TX[key2]) return F3TX[key2];
+  const N = OLDDEV ? 256 : 512, cv2 = document.createElement("canvas"), bv = document.createElement("canvas");
+  cv2.width = cv2.height = bv.width = bv.height = N;
+  const x = cv2.getContext("2d"), b = bv.getContext("2d"), r = f3Rng(N * 7 + kind.length * 131 + col.length), [R, G2, B] = f3Hex(col);
+  const sh = (k, a) => `rgba(${Math.min(255, Math.max(0, R * k)) | 0},${Math.min(255, Math.max(0, G2 * k)) | 0},${Math.min(255, Math.max(0, B * k)) | 0},${a == null ? 1 : a})`;
+  x.fillStyle = sh(1);
+  x.fillRect(0, 0, N, N);
+  b.fillStyle = "#808080";
+  b.fillRect(0, 0, N, N);
+  for (let i = 0; i < 40; i++) {
+    const px = r() * N, py = r() * N, rad = N * (0.05 + r() * 0.18), gr = x.createRadialGradient(px, py, 0, px, py, rad);
+    const k = 0.75 + r() * 0.5;
+    gr.addColorStop(0, sh(k, 0.35));
+    gr.addColorStop(1, sh(k, 0));
+    x.fillStyle = gr;
+    x.fillRect(px - rad, py - rad, rad * 2, rad * 2);
+  }
+  if (kind == "scale" || kind == "belly") {
+    const cs = kind == "belly" ? N / 10 : N / 13;
+    if (kind == "belly") {
+      for (let y = 0; y < N; y += cs) {
+        const gr = x.createLinearGradient(0, y, 0, y + cs);
+        gr.addColorStop(0, sh(1.12));
+        gr.addColorStop(0.85, sh(0.9));
+        gr.addColorStop(1, sh(0.55));
+        x.fillStyle = gr;
+        x.fillRect(0, y, N, cs);
+        const g2 = b.createLinearGradient(0, y, 0, y + cs);
+        g2.addColorStop(0, "#d0d0d0");
+        g2.addColorStop(0.85, "#8a8a8a");
+        g2.addColorStop(1, "#202020");
+        b.fillStyle = g2;
+        b.fillRect(0, y, N, cs);
+      }
+    } else for (let row = 0, y = -cs; y < N + cs; row++, y += cs * 0.78) {
+      for (let xx = -cs + (row % 2 ? cs / 2 : 0); xx < N + cs; xx += cs) {
+        const s = cs * (0.5 + r() * 0.12), k = 0.82 + r() * 0.32;
+        const gr = x.createRadialGradient(xx - s * 0.3, y - s * 0.3, s * 0.1, xx, y, s);
+        gr.addColorStop(0, sh(k * 1.04));
+        gr.addColorStop(0.75, sh(k * 0.9));
+        gr.addColorStop(1, sh(k * 0.62));
+        x.fillStyle = gr;
+        x.beginPath();
+        x.ellipse(xx, y, s, s * 0.85, 0, 0, 7);
+        x.fill();
+        const gb = b.createRadialGradient(xx - s * 0.25, y - s * 0.25, 1, xx, y, s);
+        gb.addColorStop(0, "#c8c8c8");
+        gb.addColorStop(0.75, "#9a9a9a");
+        gb.addColorStop(1, "#303030");
+        b.fillStyle = gb;
+        b.beginPath();
+        b.ellipse(xx, y, s, s * 0.85, 0, 0, 7);
+        b.fill();
+      }
+    }
+  } else if (kind == "rock") {
+    for (let i = 0; i < 900; i++) {
+      const px = r() * N, py = r() * N, s = 2 + r() * N * 0.03, k = 0.6 + r() * 0.7;
+      x.fillStyle = sh(k, 0.5);
+      x.beginPath();
+      x.arc(px, py, s, 0, 7);
+      x.fill();
+      b.fillStyle = `rgba(${k > 1 ? 220 : 40},${k > 1 ? 220 : 40},${k > 1 ? 220 : 40},.45)`;
+      b.beginPath();
+      b.arc(px, py, s, 0, 7);
+      b.fill();
+    }
+    x.strokeStyle = sh(0.35, 0.8);
+    b.strokeStyle = "#000";
+    for (let i = 0; i < 26; i++) {
+      let px = r() * N, py = r() * N;
+      x.lineWidth = b.lineWidth = 1 + r() * 2.5;
+      x.beginPath();
+      b.beginPath();
+      x.moveTo(px, py);
+      b.moveTo(px, py);
+      for (let j = 0; j < 6; j++) {
+        px += (r() - 0.5) * N * 0.12;
+        py += (r() - 0.5) * N * 0.12;
+        x.lineTo(px, py);
+        b.lineTo(px, py);
+      }
+      x.stroke();
+      b.stroke();
+    }
+  } else if (kind == "chitin") {
+    for (let i = 0; i < 60; i++) {
+      const px = r() * N, py = r() * N, s = N * (0.01 + r() * 0.03);
+      x.fillStyle = sh(0.55, 0.55);
+      x.beginPath();
+      x.arc(px, py, s, 0, 7);
+      x.fill();
+      b.fillStyle = "rgba(60,60,60,.6)";
+      b.beginPath();
+      b.arc(px, py, s, 0, 7);
+      b.fill();
+    }
+    for (let y = 0; y < N; y += N / 8) {
+      x.fillStyle = sh(0.6, 0.5);
+      x.fillRect(0, y, N, 3);
+      b.fillStyle = "#202020";
+      b.fillRect(0, y, N, 4);
+    }
+  } else if (kind == "metal") {
+    for (let i = 0; i < N; i += 2) {
+      x.fillStyle = sh(0.85 + r() * 0.3, 0.25);
+      x.fillRect(0, i, N, 1);
+    }
+    x.strokeStyle = sh(0.35);
+    b.strokeStyle = "#101010";
+    x.lineWidth = b.lineWidth = 3;
+    for (let i = 1; i < 4; i++) {
+      x.beginPath();
+      x.moveTo(0, i * N / 4);
+      x.lineTo(N, i * N / 4);
+      x.moveTo(i * N / 4, 0);
+      x.lineTo(i * N / 4, N);
+      x.stroke();
+      b.beginPath();
+      b.moveTo(0, i * N / 4);
+      b.lineTo(N, i * N / 4);
+      b.moveTo(i * N / 4, 0);
+      b.lineTo(i * N / 4, N);
+      b.stroke();
+    }
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (const [ox, oy] of [[10, 10], [N / 4 - 10, 10], [10, N / 4 - 10], [N / 4 - 10, N / 4 - 10]]) {
+      const px = i * N / 4 + ox, py = j * N / 4 + oy;
+      x.fillStyle = sh(1.3);
+      x.beginPath();
+      x.arc(px, py, 4, 0, 7);
+      x.fill();
+      b.fillStyle = "#fff";
+      b.beginPath();
+      b.arc(px, py, 4, 0, 7);
+      b.fill();
+    }
+  } else if (kind == "fur") {
+    for (let i = 0; i < (OLDDEV ? 2500 : 7e3); i++) {
+      const px = r() * N, py = r() * N, l = 4 + r() * 10, a = Math.PI * 0.5 + (r() - 0.5) * 0.6, k = 0.6 + r() * 0.8;
+      x.strokeStyle = sh(k, 0.55);
+      x.lineWidth = 1.2;
+      x.beginPath();
+      x.moveTo(px, py);
+      x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l);
+      x.stroke();
+      b.strokeStyle = k > 1 ? "rgba(230,230,230,.5)" : "rgba(30,30,30,.5)";
+      b.beginPath();
+      b.moveTo(px, py);
+      b.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l);
+      b.stroke();
+    }
+  } else if (kind == "skin") {
+    for (let i = 0; i < 220; i++) {
+      const px = r() * N, py = r() * N, s = 1 + r() * N * 0.012;
+      x.fillStyle = sh(0.6 + r() * 0.7, 0.6);
+      x.beginPath();
+      x.arc(px, py, s, 0, 7);
+      x.fill();
+      b.fillStyle = "rgba(200,200,200,.5)";
+      b.beginPath();
+      b.arc(px, py, s, 0, 7);
+      b.fill();
+    }
+    for (let i = 0; i < 30; i++) {
+      const px = r() * N, py = r() * N, s = N * 0.018;
+      x.strokeStyle = sh(1.3, 0.6);
+      x.lineWidth = 2;
+      x.beginPath();
+      x.arc(px, py, s, 0, 7);
+      x.stroke();
+      b.strokeStyle = "#ddd";
+      b.lineWidth = 3;
+      b.beginPath();
+      b.arc(px, py, s, 0, 7);
+      b.stroke();
+    }
+  } else if (kind == "ground") {
+    for (let i = 0; i < (OLDDEV ? 3e3 : 9e3); i++) {
+      const px = r() * N, py = r() * N, k = 0.7 + r() * 0.6;
+      x.fillStyle = sh(k, 0.6);
+      x.fillRect(px, py, 2, 2 + r() * 4);
+      b.fillStyle = k > 1 ? "#bbb" : "#444";
+      b.fillRect(px, py, 2, 2 + r() * 4);
+    }
+  }
+  const id = x.getImageData(0, 0, N, N), d = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (r() - 0.5) * 22;
+    d[i] += n;
+    d[i + 1] += n;
+    d[i + 2] += n;
+  }
+  x.putImageData(id, 0, 0);
+  const map = new THREE.CanvasTexture(cv2), bump2 = new THREE.CanvasTexture(bv);
+  [map, bump2].forEach((t) => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 4;
+  });
+  return F3TX[key2] = { map, bump: bump2 };
+}
+const F3SKIN = { lizard: "scale", dragon: "scale", tri: "scale", gorilla: "rock", crab: "chitin", robot: "metal", octo: "skin", wolf: "fur" };
+function f3Real(kind, col, rep, opt) {
+  opt = opt || {};
+  const t = f3SkinTex(kind, col);
+  const P2 = { lizard: [0.78, 0, 0.06], scale: [0.72, 0, 0.05], belly: [0.8, 0, 0.04], rock: [0.95, 0, 0.09], chitin: [0.32, 0.1, 0.03], metal: [0.42, 0.35, 0.025], skin: [0.45, 0, 0.03], fur: [0.98, 0, 0.05], ground: [0.95, 0, 0.04] }[kind] || [0.8, 0, 0.04];
+  const m = new THREE.MeshStandardMaterial({ color: 16777215, map: t.map.clone(), bumpMap: t.bump.clone(), bumpScale: opt.bump || P2[2], roughness: P2[0], metalness: P2[1] });
+  const rp = rep || (kind == "fur" || kind == "rock" ? [2, 2] : [1.4, 1.2]);
+  m.map.repeat.set(rp[0], rp[1]);
+  m.bumpMap.repeat.set(rp[0], rp[1]);
+  m.map.needsUpdate = m.bumpMap.needsUpdate = true;
+  return m;
+}
 const F3MON = [
   { n: "Kadal Raksasa Rexo", k: "lizard", c: "#43a047", c2: "#c5e1a5", c3: "#1b5e20", hp: 120, dmg: 8, spd: 0.035, at: ["swipe", "breath", "stomp"], bc: "#76ff03", d: "Kadal raksasa penyembur api hijau!" },
   { n: "Gorila Batu Gorok", k: "gorilla", c: "#78909c", c2: "#b0bec5", c3: "#37474f", hp: 145, dmg: 9, spd: 0.04, at: ["swipe", "stomp", "charge"], bc: "#ffab40", d: "Tinjunya sekeras batu gunung!" },
@@ -2343,6 +2571,10 @@ function f3Hero() {
   head.position.y = 1.62;
   g.add(lL, lR, body, aL, aR, head);
   g.userData = { lL, lR, aL, aR, body, head };
+  [lL, lR, aL, aR].forEach((q) => q.traverse((o) => {
+    if (o.isMesh) o.castShadow = true;
+  }));
+  body.castShadow = true;
   g.scale.set(1.3, 1.3, 1.3);
   const sh = new T3.Mesh(new T3.CircleGeometry(0.45, 16), new T3.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.25 }));
   sh.rotation.x = -Math.PI / 2;
@@ -2358,51 +2590,64 @@ function f3Hero() {
 }
 function f3Monster(M) {
   const T3 = THREE, g = new T3.Group(), u = { arms: [], legs: [], tent: [], wings: [], heads: [], mats: [] };
-  const m = (c, e) => {
-    const x = f3Mat(c, e);
+  const C = M.c, C2 = M.c2, C3 = M.c3, k = M.k, SKN2 = F3SKIN[k] || "scale", HQ = OLDDEV ? 1 : 1.8;
+  const SG = (r, a, b) => new T3.SphereGeometry(r, Math.round(a * HQ), Math.round(b * HQ)), CG = (a, b, h, n) => new T3.CylinderGeometry(a, b, h, Math.round(n * HQ)), KG = (r, h, n) => new T3.ConeGeometry(r, h, Math.max(n, Math.round(n * HQ * 0.8)));
+  const m = (c, e, kind, rep) => {
+    const x = c == "#ffffff" || c == "#111111" ? new T3.MeshStandardMaterial({ color: c, roughness: 0.12, metalness: 0 }) : f3Real(kind || SKN2, c, rep);
     u.mats.push(x);
     return x;
   };
-  const C = M.c, C2 = M.c2, C3 = M.c3, k = M.k;
+  const claw = (par, y, r) => {
+    if (!(SKN2 == "scale" || SKN2 == "rock" || SKN2 == "fur")) return;
+    for (let i = -1; i <= 1; i++) {
+      const c = new T3.Mesh(KG(r * 0.28, r * 0.9, 6), m("#ffffff"));
+      c.material.color.set("#efe6cf");
+      c.material.roughness = 0.45;
+      c.rotation.z = -Math.PI / 2;
+      c.position.set(r * 0.95, y, i * r * 0.45);
+      par.add(c);
+    }
+  };
   const eye = (par, x, y, z, s, glow) => {
-    const w = new T3.Mesh(new T3.SphereGeometry(s, 10, 8), glow ? new T3.MeshBasicMaterial({ color: glow }) : m("#ffffff"));
+    const w = new T3.Mesh(SG(s, 10, 8), glow ? new T3.MeshBasicMaterial({ color: glow }) : m("#ffffff"));
     w.position.set(x, y, z);
     par.add(w);
     if (!glow) {
-      const p = new T3.Mesh(new T3.SphereGeometry(s * 0.55, 8, 6), m("#111111"));
+      const p = new T3.Mesh(SG(s * 0.55, 8, 6), m("#111111"));
       p.position.set(x + s * 0.3, y, z + s * 0.55);
       par.add(p);
     }
   };
   const limb2 = (len, r, col, x, y, z) => {
     const p = new T3.Group();
-    const mm = new T3.Mesh(new T3.CylinderGeometry(r, r * 0.85, len, 8), m(col));
+    const mm = new T3.Mesh(CG(r, r * 0.85, len, 8), m(col));
     mm.position.y = -len / 2;
     p.add(mm);
-    const e = new T3.Mesh(new T3.SphereGeometry(r * 1.15, 8, 6), m(col));
+    const e = new T3.Mesh(SG(r * 1.15, 8, 6), m(col));
     e.position.y = -len;
     p.add(e);
+    claw(p, -len - r * 0.2, r * 1.1);
     p.position.set(x, y, z);
     return p;
   };
   if (k == "lizard" || k == "dragon" || k == "tri") {
-    const body = new T3.Mesh(new T3.SphereGeometry(1, 16, 12), m(C));
+    const body = new T3.Mesh(SG(1, 16, 12), m(C));
     body.scale.set(1.05, 1.35, 0.9);
     body.position.y = 2.2;
     g.add(body);
-    const belly = new T3.Mesh(new T3.SphereGeometry(0.8, 14, 10), m(C2));
+    const belly = new T3.Mesh(SG(0.8, 14, 10), m(C2, 0, "belly", [1, 2]));
     belly.scale.set(0.9, 1.2, 0.6);
     belly.position.set(0.25, 2.1, 0.35);
     g.add(belly);
     for (let i = 0; i < 5; i++) {
-      const sp = new T3.Mesh(new T3.ConeGeometry(0.22, 0.6, 6), m(k == "tri" ? "#ff6f00" : C3));
+      const sp = new T3.Mesh(KG(0.22, 0.6, 6), m(k == "tri" ? "#ff6f00" : C3));
       sp.position.set(-0.55 - i * 0.05, 3.25 - i * 0.42, 0);
       sp.rotation.z = 0.7 + i * 0.12;
       g.add(sp);
     }
     let tx = -0.9, ty = 1.5, tr = 0.45;
     for (let i = 0; i < 6; i++) {
-      const s = new T3.Mesh(new T3.SphereGeometry(tr, 10, 8), m(C));
+      const s = new T3.Mesh(SG(tr, 10, 8), m(C));
       s.position.set(tx, ty, 0);
       g.add(s);
       u.tent.push({ o: s, i, bx: tx, by: ty });
@@ -2415,7 +2660,7 @@ function f3Monster(M) {
       const hg = new T3.Group();
       const off = nH == 3 ? h - 1 : 0;
       hg.position.set(0.75 + (nH == 3 ? Math.abs(off) * -0.15 : 0), 3.55 + (nH == 3 ? off == 0 ? 0.45 : 0 : 0), off * 0.7);
-      const hd = new T3.Mesh(new T3.SphereGeometry(0.55, 14, 10), m(C));
+      const hd = new T3.Mesh(SG(0.55, 14, 10), m(C));
       hd.scale.set(1.15, 0.95, 0.9);
       hg.add(hd);
       const sn = new T3.Mesh(new T3.BoxGeometry(0.75, 0.4, 0.6), m(C));
@@ -2426,7 +2671,7 @@ function f3Monster(M) {
       hg.add(jaw);
       u.jaw = u.jaw || jaw;
       for (let t = 0; t < 3; t++) {
-        const th = new T3.Mesh(new T3.ConeGeometry(0.05, 0.14, 4), m("#ffffff"));
+        const th = new T3.Mesh(KG(0.05, 0.14, 4), m("#ffffff"));
         th.rotation.z = Math.PI;
         th.position.set(0.35 + t * 0.2, -0.26, 0.22);
         hg.add(th);
@@ -2435,14 +2680,14 @@ function f3Monster(M) {
       eye(hg, 0.25, 0.22, -0.33, 0.14);
       if (k != "lizard") {
         for (const s of [-1, 1]) {
-          const hr = new T3.Mesh(new T3.ConeGeometry(0.1, 0.55, 6), m(k == "tri" ? "#fff8e1" : "#e1f5fe"));
+          const hr = new T3.Mesh(KG(0.1, 0.55, 6), m(k == "tri" ? "#fff8e1" : "#e1f5fe"));
           hr.position.set(-0.2, 0.55, s * 0.25);
           hr.rotation.z = 0.5;
           hg.add(hr);
         }
       }
       if (nH == 3) {
-        const nk = new T3.Mesh(new T3.CylinderGeometry(0.22, 0.3, 1, 8), m(C));
+        const nk = new T3.Mesh(CG(0.22, 0.3, 1, 8), m(C));
         nk.position.set(-0.35, -0.55, 0);
         nk.rotation.z = 0.5;
         hg.add(nk);
@@ -2452,10 +2697,16 @@ function f3Monster(M) {
     }
     u.arms.push(limb2(0.8, 0.17, C, 0.6, 2.75, 0.6), limb2(0.8, 0.17, C, 0.6, 2.75, -0.6));
     u.legs.push(limb2(1.05, 0.32, C, -0.1, 1.2, 0.5), limb2(1.05, 0.32, C, -0.1, 1.2, -0.5));
+    for (const s of [-1, 1]) {
+      const th = new T3.Mesh(SG(0.55, 14, 10), m(C));
+      th.scale.set(1, 1.3, 0.8);
+      th.position.set(-0.1, 1.55, s * 0.5);
+      g.add(th);
+    }
     if (k != "lizard") {
       for (const s of [-1, 1]) {
         const wg = new T3.Group();
-        const wm = new T3.Mesh(new T3.ConeGeometry(1.2, 1.8, 3), new T3.MeshLambertMaterial({ color: k == "tri" ? "#bf360c" : C3, side: T3.DoubleSide, transparent: true, opacity: 0.85 }));
+        const wm = new T3.Mesh(KG(1.2, 1.8, 3), new T3.MeshLambertMaterial({ color: k == "tri" ? "#bf360c" : C3, side: T3.DoubleSide, transparent: true, opacity: 0.85 }));
         wm.rotation.z = -Math.PI / 2;
         wm.scale.z = 0.12;
         wm.position.set(-0.6, 0.4, 0);
@@ -2471,7 +2722,7 @@ function f3Monster(M) {
     body.scale.set(1.1, 1.15, 0.95);
     body.position.y = 2.4;
     g.add(body);
-    const ch = new T3.Mesh(new T3.SphereGeometry(0.75, 12, 8), m(C2));
+    const ch = new T3.Mesh(SG(0.75, 12, 8), m(C2));
     ch.scale.set(0.7, 1, 0.5);
     ch.position.set(0.55, 2.3, 0);
     g.add(ch);
@@ -2479,7 +2730,7 @@ function f3Monster(M) {
     hg.position.set(0.55, 3.75, 0);
     const hd = new T3.Mesh(new T3.DodecahedronGeometry(0.62, 1), m(C));
     hg.add(hd);
-    const mz = new T3.Mesh(new T3.SphereGeometry(0.42, 10, 8), m(C2));
+    const mz = new T3.Mesh(SG(0.42, 10, 8), m(C2));
     mz.position.set(0.38, -0.15, 0);
     mz.scale.set(0.8, 0.8, 1.1);
     hg.add(mz);
@@ -2498,7 +2749,7 @@ function f3Monster(M) {
       g.add(r);
     }
   } else if (k == "crab") {
-    const body = new T3.Mesh(new T3.SphereGeometry(1.2, 16, 10), m(C));
+    const body = new T3.Mesh(SG(1.2, 16, 10), m(C));
     body.scale.set(1.3, 0.7, 1);
     body.position.y = 1.5;
     g.add(body);
@@ -2512,7 +2763,7 @@ function f3Monster(M) {
     const hg = new T3.Group();
     hg.position.set(0.6, 2.1, 0);
     for (const s of [-1, 1]) {
-      const st = new T3.Mesh(new T3.CylinderGeometry(0.06, 0.06, 0.6, 6), m(C));
+      const st = new T3.Mesh(CG(0.06, 0.06, 0.6, 6), m(C));
       st.position.set(0, 0.3, s * 0.3);
       hg.add(st);
       eye(hg, 0, 0.65, s * 0.3, 0.16);
@@ -2521,14 +2772,14 @@ function f3Monster(M) {
     u.heads.push(hg);
     for (const s of [-1, 1]) {
       const cl = new T3.Group();
-      const a = new T3.Mesh(new T3.CylinderGeometry(0.16, 0.14, 1, 8), m(C));
+      const a = new T3.Mesh(CG(0.16, 0.14, 1, 8), m(C));
       a.position.y = -0.5;
       cl.add(a);
-      const p1 = new T3.Mesh(new T3.SphereGeometry(0.42, 12, 8), m(C));
+      const p1 = new T3.Mesh(SG(0.42, 12, 8), m(C));
       p1.scale.set(1.3, 0.8, 0.8);
       p1.position.set(0.3, -1.1, 0);
       cl.add(p1);
-      const p2 = new T3.Mesh(new T3.ConeGeometry(0.2, 0.7, 8), m(C3));
+      const p2 = new T3.Mesh(KG(0.2, 0.7, 8), m(C3));
       p2.position.set(0.75, -1, 0);
       p2.rotation.z = -Math.PI / 2;
       cl.add(p2);
@@ -2537,7 +2788,7 @@ function f3Monster(M) {
       g.add(cl);
       u.arms.push(cl);
     }
-    const lava = new T3.Mesh(new T3.SphereGeometry(0.9, 12, 8), new T3.MeshBasicMaterial({ color: "#ffab00", transparent: true, opacity: 0.35 }));
+    const lava = new T3.Mesh(SG(0.9, 12, 8), new T3.MeshBasicMaterial({ color: "#ffab00", transparent: true, opacity: 0.35 }));
     lava.scale.set(1.3, 0.4, 1);
     lava.position.y = 2.1;
     g.add(lava);
@@ -2548,7 +2799,7 @@ function f3Monster(M) {
     const pl = new T3.Mesh(new T3.BoxGeometry(0.1, 1.2, 0.9), m(C3));
     pl.position.set(0.86, 2.4, 0);
     g.add(pl);
-    const core = new T3.Mesh(new T3.SphereGeometry(0.25, 12, 8), new T3.MeshBasicMaterial({ color: "#00e5ff" }));
+    const core = new T3.Mesh(SG(0.25, 12, 8), new T3.MeshBasicMaterial({ color: "#00e5ff" }));
     core.position.set(0.9, 2.5, 0);
     g.add(core);
     const hg = new T3.Group();
@@ -2558,10 +2809,10 @@ function f3Monster(M) {
     const vz = new T3.Mesh(new T3.BoxGeometry(0.06, 0.22, 0.8), new T3.MeshBasicMaterial({ color: "#ff1744" }));
     vz.position.set(0.56, 0.05, 0);
     hg.add(vz);
-    const an = new T3.Mesh(new T3.CylinderGeometry(0.03, 0.03, 0.6, 6), m(C3));
+    const an = new T3.Mesh(CG(0.03, 0.03, 0.6, 6), m(C3));
     an.position.y = 0.65;
     hg.add(an);
-    const ab = new T3.Mesh(new T3.SphereGeometry(0.1, 8, 6), new T3.MeshBasicMaterial({ color: "#ffea00" }));
+    const ab = new T3.Mesh(SG(0.1, 8, 6), new T3.MeshBasicMaterial({ color: "#ffea00" }));
     ab.position.y = 0.98;
     hg.add(ab);
     g.add(hg);
@@ -2569,7 +2820,7 @@ function f3Monster(M) {
     u.arms.push(limb2(1.3, 0.22, C3, 0.1, 3.1, 1), limb2(1.3, 0.22, C3, 0.1, 3.1, -1));
     u.legs.push(limb2(1.2, 0.28, C3, 0, 1.45, 0.45), limb2(1.2, 0.28, C3, 0, 1.45, -0.45));
   } else if (k == "octo") {
-    const hd = new T3.Mesh(new T3.SphereGeometry(1.35, 16, 12), m(C));
+    const hd = new T3.Mesh(SG(1.35, 16, 12), m(C));
     hd.scale.set(1, 1.25, 1);
     hd.position.y = 3;
     g.add(hd);
@@ -2583,34 +2834,34 @@ function f3Monster(M) {
       const a = i / 8 * Math.PI * 2;
       const arr = [];
       for (let j = 0; j < 6; j++) {
-        const s = new T3.Mesh(new T3.SphereGeometry(0.28 * (1 - j * 0.12), 8, 6), m(j % 2 ? C : C2));
+        const s = new T3.Mesh(SG(0.28 * (1 - j * 0.12), 8, 6), m(j % 2 ? C : C2));
         g.add(s);
         arr.push(s);
       }
       u.tent.push({ arr, a });
     }
   } else if (k == "wolf") {
-    const body = new T3.Mesh(new T3.SphereGeometry(1, 14, 10), m(C));
+    const body = new T3.Mesh(SG(1, 14, 10), m(C));
     body.scale.set(1.5, 0.85, 0.8);
     body.position.y = 2;
     g.add(body);
-    const mane = new T3.Mesh(new T3.SphereGeometry(0.85, 12, 8), m(C2));
+    const mane = new T3.Mesh(SG(0.85, 12, 8), m(C2));
     mane.position.set(0.8, 2.4, 0);
     mane.scale.set(0.8, 1.1, 1);
     g.add(mane);
     const hg = new T3.Group();
     hg.position.set(1.5, 3, 0);
-    const hd = new T3.Mesh(new T3.SphereGeometry(0.5, 12, 8), m(C));
+    const hd = new T3.Mesh(SG(0.5, 12, 8), m(C));
     hg.add(hd);
-    const sn = new T3.Mesh(new T3.ConeGeometry(0.28, 0.75, 8), m(C));
+    const sn = new T3.Mesh(KG(0.28, 0.75, 8), m(C));
     sn.rotation.z = -Math.PI / 2;
     sn.position.set(0.55, -0.12, 0);
     hg.add(sn);
-    const nose = new T3.Mesh(new T3.SphereGeometry(0.09, 8, 6), m("#111111"));
+    const nose = new T3.Mesh(SG(0.09, 8, 6), m("#111111"));
     nose.position.set(0.92, -0.1, 0);
     hg.add(nose);
     for (const s of [-1, 1]) {
-      const ea = new T3.Mesh(new T3.ConeGeometry(0.16, 0.45, 6), m(C3));
+      const ea = new T3.Mesh(KG(0.16, 0.45, 6), m(C3));
       ea.position.set(-0.1, 0.5, s * 0.25);
       hg.add(ea);
     }
@@ -2622,7 +2873,7 @@ function f3Monster(M) {
     u.legs.push(limb2(1.2, 0.22, C, -0.8, 1.7, 0.45), limb2(1.2, 0.22, C, -0.8, 1.7, -0.45));
     let tx = -1.4;
     for (let i = 0; i < 4; i++) {
-      const s = new T3.Mesh(new T3.SphereGeometry(0.3 - i * 0.04, 8, 6), m(i == 3 ? C2 : C));
+      const s = new T3.Mesh(SG(0.3 - i * 0.04, 8, 6), m(i == 3 ? C2 : C));
       s.position.set(tx, 2.3 + i * 0.15, 0);
       g.add(s);
       u.tent.push({ o: s, i, bx: tx, by: 2.3 + i * 0.15 });
@@ -2633,10 +2884,15 @@ function f3Monster(M) {
   u.legs.forEach((l) => {
     if (!l.parent) g.add(l);
   });
-  const sh = new T3.Mesh(new T3.CircleGeometry(1.6, 20), new T3.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.28 }));
+  const sh = new T3.Mesh(new T3.CircleGeometry(1.6, 20), new T3.MeshBasicMaterial({ color: 0, transparent: true, opacity: OLDDEV ? 0.28 : 0.12 }));
   sh.rotation.x = -Math.PI / 2;
   sh.position.y = 0.01;
   g.add(sh);
+  g.traverse((o) => {
+    if (o.isMesh && !(o.material && o.material.transparent)) {
+      o.castShadow = true;
+    }
+  });
   g.userData = u;
   return g;
 }
@@ -2665,16 +2921,35 @@ function f3Start() {
     return;
   }
   R.setPixelRatio(Math.min(window.devicePixelRatio || 1, OLDDEV ? 1 : 1.6));
+  if (!OLDDEV) {
+    R.shadowMap.enabled = true;
+    R.shadowMap.type = T3.PCFSoftShadowMap;
+  }
   const S = new T3.Scene();
   S.background = new T3.Color(A.sky);
   S.fog = new T3.Fog(A.fog, 16, 42);
   const cam2 = new T3.PerspectiveCamera(45, 1, 0.1, 100);
-  S.add(new T3.HemisphereLight(16777215, A.floor, 0.95));
-  const dl = new T3.DirectionalLight(16777215, 0.75);
-  dl.position.set(4, 10, 8);
+  S.add(new T3.HemisphereLight(16777215, A.floor, 0.7));
+  S.add(new T3.AmbientLight(16777215, 0.15));
+  const dl = new T3.DirectionalLight(16774368, 1.05);
+  dl.position.set(5, 11, 8);
+  dl.castShadow = !OLDDEV;
+  dl.shadow.mapSize.set(1024, 1024);
+  const sc0 = dl.shadow.camera;
+  sc0.left = -12;
+  sc0.right = 12;
+  sc0.top = 12;
+  sc0.bottom = -4;
+  sc0.near = 1;
+  sc0.far = 40;
+  dl.shadow.bias = -8e-4;
   S.add(dl);
-  const fl = new T3.Mesh(new T3.CylinderGeometry(11, 11.6, 0.6, 40), f3Mat(A.floor));
+  const rl = new T3.DirectionalLight(A.deco, 0.55);
+  rl.position.set(-6, 6, -9);
+  S.add(rl);
+  const fl = new T3.Mesh(new T3.CylinderGeometry(11, 11.6, 0.6, 48), f3Real("ground", A.floor, [7, 7]));
   fl.position.y = -0.3;
+  fl.receiveShadow = true;
   S.add(fl);
   const rim = new T3.Mesh(new T3.TorusGeometry(11.1, 0.25, 8, 48), f3Mat(A.rim));
   rim.rotation.x = Math.PI / 2;
@@ -2683,7 +2958,7 @@ function f3Start() {
     const a = Math.PI * (0.05 + i / 13 * 0.9);
     const x = Math.cos(a) * 14, z = -Math.sin(a) * 14;
     const h = 2 + i * 37 % 5;
-    const p = new T3.Mesh(i % 2 ? new T3.CylinderGeometry(0.5, 0.7, h, 8) : new T3.ConeGeometry(1.2, h + 1, 7), f3Mat(i % 2 ? A.rim : A.deco));
+    const p = new T3.Mesh(i % 2 ? new T3.CylinderGeometry(0.5, 0.7, h, 10) : new T3.ConeGeometry(1.2, h + 1, 9), f3Real("rock", i % 2 ? A.rim : A.deco, [1, 2]));
     p.position.set(x, h / 2, z);
     S.add(p);
   }
