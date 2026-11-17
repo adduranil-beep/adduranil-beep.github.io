@@ -365,6 +365,7 @@ body:not(.ingame) #fsBtn{display:none!important}
 .heroTabs{flex-wrap:wrap}.heroTabs button{padding:5px 9px!important;font-size:13px!important}
 .coHero{display:flex;gap:4px;justify-content:center;margin:4px 0}.coHero button{flex:1;max-width:76px;border:2px solid #fff6;border-radius:12px;background:#ffffff22;color:#fff;font:700 10px Fredoka,sans-serif;padding:3px 2px;min-height:44px}.coHero button img{display:block;width:30px;height:30px;border-radius:50%;margin:0 auto 1px}.coHero button.on{background:#ffd54f;color:#4e342e;border-color:#fff}.coHero button:disabled{opacity:.35}
 .coList{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:4px 0}.coList span{background:#ffffff26;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:700}
+#title .card.taken{filter:grayscale(1) brightness(.8)!important;opacity:.5!important}#title .card.taken::after{content:'🔒 Dipakai';position:absolute;left:0;right:0;top:40%;background:#000a;color:#fff;font:700 11px Fredoka,sans-serif;padding:3px 0}
 </style>
 </head>
 <body>
@@ -4477,7 +4478,7 @@ function voPump(id) {
   }
 }
 function chTick() {
-  let on = !!(CO.on && CO.rm);
+  let on = !!(CO.on && CO.rm && Object.keys(CO.peers).length);
   if (on && state == "title") {
     const cb = document.getElementById("coopBox");
     if (!cb || !cb.offsetParent) on = false;
@@ -7890,8 +7891,42 @@ function levelStory(n) {
 }
 let storyIntro = 0;
 function coopLocked() {
-  return !!(CO.rm && CO.role);
+  return !!(CO.rm && CO.role && (!CO.autoR || Object.keys(CO.peers).length));
 }
+function autoJoin(n) {
+  if (CO.autoOff) return;
+  CO.autoR = n || 1;
+  coopStart("umum" + CO.autoR, "auto");
+}
+function homeTaken(ps) {
+  const tk = ps.map((p) => p.presence.hh).filter((x) => x);
+  CO.tk = tk;
+  if (state != "title") return;
+  document.querySelectorAll("#title .card").forEach((c) => c.classList.toggle("taken", tk.includes(c.dataset.hero)));
+  if (tk.includes(HSEL)) {
+    const h = CO.hero && !tk.includes(CO.hero) ? CO.hero : HK.find((k) => !tk.includes(k));
+    if (h) {
+      HSEL = h;
+      document.querySelectorAll("#title .card").forEach((c) => c.classList.toggle("on", c.dataset.hero == h));
+      try {
+        hmPlayN.textContent = "bersama " + HN(h);
+      } catch (e) {
+      }
+    }
+  }
+}
+setTimeout(() => {
+  try {
+    if (!CO.rm && !/^#main-/.test(location.hash)) autoJoin(1);
+  } catch (e) {
+  }
+}, 1800);
+setInterval(() => {
+  try {
+    if (!CO.rm && !CO.autoOff && !CO.busy) autoJoin(1);
+  } catch (e) {
+  }
+}, 2e4);
 function switchHero() {
   if (state != "play" || !P) return;
   if (coopLocked()) {
@@ -12410,12 +12445,17 @@ function coopPick(ps) {
   const me = CO.rm && CO.rm.me || "";
   if (CO.pend) {
     const host = ps.find((p) => p.presence.r == 1), wt = Date.now() - CO.pend;
-    if (wt < 2200 || !host && wt < 4500) return;
+    if (wt < 2200 || !host && !CO.autoR && wt < 4500) return;
     const used = ps.map((p) => p.presence.r).filter((x) => x);
     let rl = 0;
-    for (let i = 2; i <= 4; i++) if (!used.includes(i)) {
+    for (let i = CO.autoR ? 1 : 2; i <= 4; i++) if (!used.includes(i)) {
       rl = i;
       break;
+    }
+    if (!rl && CO.autoR && CO.autoR < 60) {
+      const nx = CO.autoR + 1;
+      coopStop().then(() => autoJoin(nx));
+      return;
     }
     if (!rl) {
       coopStop().then(() => {
@@ -12430,7 +12470,7 @@ function coopPick(ps) {
     CO.hero = null;
     coopUI();
   }
-  const cf = CO.role > 1 && ps.find((p) => p.presence.r == CO.role);
+  const cf = (CO.role > 1 || CO.autoR && CO.role) && ps.find((p) => p.presence.r == CO.role);
   if (cf) {
     const q = cf.presence, mp = state != "title", op = !!q.st && q.st != "title";
     let lose;
@@ -12477,7 +12517,9 @@ function coopTick() {
   if (P && P.swMsg > 0) P.swMsg--;
   if (coopLocked() && state == "play" && CO.hero && hero != CO.hero) hero = CO.hero;
   const host = ps.find((p) => p.presence.r == 1), hp = host && host.presence, any = ps.filter((p) => p.presence.r).length;
-  if (CO.role == 1) {
+  homeTaken(ps);
+  if (CO.autoR) {
+  } else if (CO.role == 1) {
     if (any && state == "title" && !CO.auto && shop.classList.contains("hide")) {
       if (!CO.cd) CO.cd = 240;
       if (--CO.cd <= 0) {
@@ -12504,9 +12546,9 @@ function coopTick() {
     }
   }
   if (tick % 15 == 7) ps.forEach((p) => coopApply(p.presence));
-  if (++coopLvTimer % 30 == 0) ps.forEach((p) => coopFollowLevel(p.presence));
+  if (++coopLvTimer % 30 == 0 && !CO.autoR) ps.forEach((p) => coopFollowLevel(p.presence));
   ps.forEach((p) => coopFollowRoom(p.presence, p.peer));
-  CO.status = "📱 HP " + (CO.role || "?") + " • " + (ps.length ? "👨‍👩‍👧‍👦 " + (ps.length + 1) + " HP main bersama" : "⏳ Menunggu teman… Kode: " + CO.code);
+  CO.status = CO.autoR ? "🌐 Online • " + (ps.length ? ps.length + 1 + " pemain di room" : "belum ada teman") : "📱 HP " + (CO.role || "?") + " • " + (ps.length ? "👨‍👩‍👧‍👦 " + (ps.length + 1) + " HP main bersama" : "⏳ Menunggu teman… Kode: " + CO.code);
 }
 function drawRemote() {
   if (!CO.rm) return;
@@ -12700,7 +12742,27 @@ function shareLink() {
     coopUI();
   }
 }
+async function coopJoinG(gen2, name) {
+  const rm = await CO.api.join(name);
+  if (CO.gen !== gen2) {
+    try {
+      rm.leave();
+    } catch (e2) {
+    }
+    const e = new Error("stale");
+    e.stale = 1;
+    throw e;
+  }
+  return rm;
+}
 async function coopStart(code, role) {
+  const gen2 = CO.gen = (CO.gen || 0) + 1;
+  if (role == "auto") role = 2;
+  else CO.autoR = 0;
+  CO.busy = 1;
+  setTimeout(() => {
+    CO.busy = 0;
+  }, 9e3);
   CO.role = role || CO.role || 1;
   CO.rt = Date.now();
   CO.pend = CO.role > 1 ? Date.now() : 0;
@@ -12728,12 +12790,12 @@ async function coopStart(code, role) {
     if (CO.rm) await CO.rm.leave();
     CO.code = code;
     try {
-      CO.rm = chWrap(await CO.api.join("kkad-" + code));
+      CO.rm = chWrap(await coopJoinG(gen2, "kkad-" + code));
     } catch (e0) {
       if (CO.net) throw e0;
       CO.api = netRoomApi();
       CO.net = true;
-      CO.rm = chWrap(await CO.api.join("kkad-" + code));
+      CO.rm = chWrap(await coopJoinG(gen2, "kkad-" + code));
     }
     CO.on = true;
     CO.status = "⏳ Menunggu teman… Kode: " + code;
@@ -12743,12 +12805,14 @@ async function coopStart(code, role) {
     CO.rm.presence({ v: 2, st: state, lv: level, h: hero }).catch(() => {
     });
   } catch (e) {
+    if (e && e.stale || CO.gen !== gen2) return;
     CO.status = IN_CLAUDE && webBase() ? "❌ Di halaman Claude, main berdua lewat link umum tidak bisa. Buka versi web: " + webBase() : CO.net ? "❌ Server main berdua tidak bisa dihubungi. Pastikan HP tersambung internet, lalu coba lagi." : "❌ Gagal terhubung (" + (e && e.code || "error") + "). Coba lagi.";
     CO.rm = null;
   }
   coopUI();
 }
 async function coopStop() {
+  CO.gen = (CO.gen || 0) + 1;
   CO.role = 0;
   CO.pend = 0;
   CO.hero = null;
@@ -12774,11 +12838,12 @@ function coopUI() {
   const ps = CO.rm ? CO.rm.peers().filter((p) => !p.sameTab && p.presence && p.presence.v == 2) : [];
   let h = "<b>👨‍👩‍👧‍👦 Main Bersama (2–4 HP)</b><br>";
   if (!CO.rm) {
+    h += '<button class="coBig" onclick="CO.autoOff=0;autoJoin(1)">🌐 Masuk Room Umum</button><br>';
     h += "<small>" + (IN_CLAUDE ? webBase() ? '🌐 Untuk main bersama, buka <a href="' + webBase() + '" target="_blank" rel="noopener" style="color:#ffeb3b;font-weight:bold">versi web umum</a> di setiap HP.' : "🔗 Buka game ini di 2–4 HP. HP 1 buat room, HP lain masukkan kodenya." : "🌐 Main bersama lewat internet, sampai 4 HP. Setiap HP harus tersambung internet.") + '</small><br><button class="coBig" onclick="quickPair()">✨ Buat Room (HP 1)</button>';
     h += `<div class="coRow"><input id="coIn" inputmode="numeric" maxlength="4" placeholder="Kode"><button onclick="const v=(coIn.value||'').replace(/\\D/g,'');if(v.length==4)coopStart(v,2);else{CO.status='Masukkan 4 angka kode dari HP 1';coopUI()}">👫 Gabung</button></div><small>Pahlawan yang dipilih di beranda akan dipakai. Kalau sudah dipakai teman, otomatis diganti.</small>`;
   } else {
     const me = CO.role;
-    h += '<div class="hpTag hp' + (me == 2 ? 2 : 1) + '">📱 ' + (me ? "Ini HP " + me : "Menentukan nomor HP…") + (CO.hero ? " • " + HE[CO.hero] + " " + HN(CO.hero) : "") + '</div><div class="coCode">Kode: <b>' + CO.code + "</b></div>";
+    h += '<div class="hpTag hp' + (me == 2 ? 2 : 1) + '">📱 ' + (me ? "Ini HP " + me : "Menentukan nomor HP…") + (CO.hero ? " • " + HE[CO.hero] + " " + HN(CO.hero) : "") + "</div>" + (CO.autoR ? '<div class="coCode">🌐 Room Umum ' + CO.autoR + " • otomatis</div>" : '<div class="coCode">Kode: <b>' + CO.code + "</b></div>");
     if (me && state == "title") {
       const tk = ps.map((p) => p.presence.hh).filter((x) => x);
       h += '<div class="coHero">' + HK.map((k) => "<button " + (tk.includes(k) ? "disabled " : "") + 'class="' + (CO.hero == k ? "on" : "") + `" onclick="hmSel('` + k + `');setTimeout(coopUI,300)"><img src="` + IMG[k] + '">' + HN(k).slice(0, 9) + "</button>").join("") + "</div>";
@@ -12792,10 +12857,11 @@ function coopUI() {
         const f = ps.find((p) => p.presence.r == 1);
         return f && f.presence.cd || 0;
       })();
-      h += '<div class="coOk">✅ ' + (ps.length + 1) + " HP terhubung" + (ps.length < 3 ? " • bisa tambah " + (3 - ps.length) + " lagi" : " • penuh") + "</div>" + (cdv ? '<div class="coCd">Mulai bersama dalam ' + cdv + "…</div>" : CO.role == 1 ? '<button onclick="CO.auto=false;CO.cd=0">▶ Mulai Bersama</button>' : "<div>Menunggu HP 1 memulai…</div>");
+      h += '<div class="coOk">✅ ' + (ps.length + 1) + " HP terhubung" + (ps.length < 3 ? " • bisa tambah " + (3 - ps.length) + " lagi" : " • penuh") + "</div>" + (CO.autoR ? "<div>Tekan ▶ MAIN di beranda untuk bermain. Teman di level yang sama akan terlihat.</div>" : cdv ? '<div class="coCd">Mulai bersama dalam ' + cdv + "…</div>" : CO.role == 1 ? '<button onclick="CO.auto=false;CO.cd=0">▶ Mulai Bersama</button>' : "<div>Menunggu HP 1 memulai…</div>");
       if (ps.length < 3) h += '<button class="coSm" onclick="netShare()">📤 Ajak HP lain (kode ' + CO.code + ")</button>";
-    } else h += '<div>⏳ Menunggu teman…</div><div class="coBigCode">' + CO.code + "</div><small>Di HP lain: buka game ➜ 👥 Bersama ➜ ketik kode <b>" + CO.code + '</b> ➜ Gabung. Bisa sampai 4 HP.</small><br><button class="coSm" onclick="netShare()">📤 Kirim ' + (IN_CLAUDE ? "link + " : "") + "kode lewat WhatsApp</button>";
-    h += '<button class="coOut" onclick="coopStop()">Keluar mode bersama</button>';
+    } else if (CO.autoR) h += "<div>🌐 Kamu sudah online. Pemain lain yang membuka game akan otomatis masuk ke sini.</div>";
+    else h += '<div>⏳ Menunggu teman…</div><div class="coBigCode">' + CO.code + "</div><small>Di HP lain: buka game ➜ 👥 Bersama ➜ ketik kode <b>" + CO.code + '</b> ➜ Gabung. Bisa sampai 4 HP.</small><br><button class="coSm" onclick="netShare()">📤 Kirim ' + (IN_CLAUDE ? "link + " : "") + "kode lewat WhatsApp</button>";
+    h += '<button class="coOut" onclick="CO.autoOff=1;coopStop()">' + (CO.autoR ? "Main sendiri (keluar room umum)" : "Keluar mode bersama") + "</button>";
   }
   if (CO.rm && CO.rm.lost) h += '<div class="coErr">⚠️ Sinyal terputus… menyambung ulang otomatis</div>';
   if (CO.status && /^(❌|📋|🔗)/.test(CO.status)) h += '<div class="coErr">' + CO.status.replace(/(https?:\/\/\S+)/, '<a href="$1" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline">$1</a>') + "</div>";
@@ -19598,6 +19664,13 @@ try {
 }
 if (!HK.includes(HSEL)) HSEL = "girl";
 function hmSel(h) {
+  if (CO.rm && (CO.tk || []).includes(h)) {
+    try {
+      chToast(HE[h] + " " + HN(h) + " sedang dipakai pemain lain", "s");
+    } catch (e) {
+    }
+    return;
+  }
   HSEL = h;
   try {
     localStorage.kkadHSel = h;
@@ -19631,7 +19704,7 @@ function hmGo(hh) {
   } catch (e) {
   }
   musInit();
-  hero = hh;
+  hero = coopLocked() && CO.hero ? CO.hero : hh;
   lives = 7;
   score = 0;
   coinN = 0;
@@ -19639,7 +19712,14 @@ function hmGo(hh) {
   let L0 = +lvSel.value || 1;
   if (CO.rm) {
     const f = CO.rm.peers().find((p) => !p.sameTab && p.presence && p.presence.v == 2 && (p.presence.st == "play" || p.presence.st == "win"));
-    if (f) L0 = f.presence.lv;
+    if (f) {
+      let mx = 1;
+      try {
+        mx = +localStorage[PK("kkadMax")] || 1;
+      } catch (e) {
+      }
+      if (!CO.autoR || f.presence.lv <= mx) L0 = f.presence.lv;
+    }
   }
   startLevel(L0);
 }
@@ -19678,7 +19758,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
