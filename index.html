@@ -395,15 +395,15 @@ body:not(.ingame) #fsBtn{display:none!important}
   <div class="hmStage">
     <div class="hmPick">👆 Ketuk untuk memilih pahlawan</div>
     <div class="cards">
-      <div class="card" data-hero="girl"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cGirl"><b id="nmGirl">Kak Pemberani</b><small>Kakak • Lari cepat & melayang</small><div class="cStat"><span>⚡ Lari</span><i style="--v:95%"></i><span>🐸 Lompat</span><i style="--v:70%"></i></div></div>
-      <div class="card" data-hero="boy"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cBoy"><b id="nmBoy">Dik Jagoan</b><small>Adik • Lompat 2x tinggi</small><div class="cStat"><span>⚡ Lari</span><i style="--v:75%"></i><span>🐸 Lompat</span><i style="--v:98%"></i></div></div>
+      <div class="card" data-hero="girl"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cGirl"><b id="nmGirl">Sofia</b><small>Kakak • Lari cepat & melayang</small><div class="cStat"><span>⚡ Lari</span><i style="--v:95%"></i><span>🐸 Lompat</span><i style="--v:70%"></i></div></div>
+      <div class="card" data-hero="boy"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cBoy"><b id="nmBoy">Ali</b><small>Adik • Lompat 2x tinggi</small><div class="cStat"><span>⚡ Lari</span><i style="--v:75%"></i><span>🐸 Lompat</span><i style="--v:98%"></i></div></div>
       <div class="card" data-hero="abi"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cAbi"><b>Abi</b><small>Lompat super & hentak</small><div class="cStat"><span>⚡ Lari</span><i style="--v:80%"></i><span>🐸 Lompat</span><i style="--v:100%"></i></div></div>
       <div class="card" data-hero="ummi"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cUmmi"><b>Ummi</b><small>Melayang & magnet koin</small><div class="cStat"><span>⚡ Lari</span><i style="--v:85%"></i><span>🐸 Lompat</span><i style="--v:72%"></i></div></div>
     </div>
   </div>
   <div class="hmPlayW">
     <div class="hmLv">🗺️ <select id="lvSel"></select></div>
-    <button id="hmPlay" onclick="hmStart()"><span>▶ MAIN</span><small id="hmPlayN">bersama Kak Pemberani</small></button>
+    <button id="hmPlay" onclick="hmStart()"><span>▶ MAIN</span><small id="hmPlayN">bersama Sofia</small></button>
   </div>
   <div class="hmNav">
     <button onclick="openShop(false)"><b>🛍️</b>Toko</button>
@@ -519,7 +519,7 @@ var OLDDEV = function() {
   if (!(window.CSS && CSS.supports && CSS.supports("inset", "0"))) h.classList.add("noinset");
 })();
 var FS_IN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>', FS_OUT = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
-let PROFS = [], CUR = "", KAK = "Kak Pemberani", ADK = "Dik Jagoan";
+let PROFS = [], CUR = "", KAK = "Sofia", ADK = "Ali";
 function PK(k) {
   return k + "_" + CUR;
 }
@@ -529,8 +529,12 @@ function profLoadList() {
   } catch (e) {
     PROFS = [];
   }
+  PROFS.forEach((p) => {
+    if (!p.kak || p.kak == "Kak Pemberani") p.kak = "Sofia";
+    if (!p.adik || p.adik == "Dik Jagoan") p.adik = "Ali";
+  });
   if (!PROFS.length) {
-    PROFS = [{ id: "p1", kak: "Kak Pemberani", adik: "Dik Jagoan", t: Date.now() }];
+    PROFS = [{ id: "p1", kak: "Sofia", adik: "Ali", t: Date.now() }];
     try {
       if (localStorage.kkadBank) localStorage.kkadBank_p1 = localStorage.kkadBank;
       if (localStorage.kkadMax) localStorage.kkadMax_p1 = localStorage.kkadMax;
@@ -559,8 +563,8 @@ function profSetCur(id) {
   } catch (e) {
   }
   const p = PROFS.find((q) => q.id == id) || PROFS[0];
-  KAK = p.kak || "Kak Pemberani";
-  ADK = p.adik || "Dik Jagoan";
+  KAK = p.kak || "Sofia";
+  ADK = p.adik || "Ali";
   try {
     NM.girl = KAK;
     NM.boy = ADK;
@@ -573,7 +577,7 @@ function profSetCur(id) {
   }
 }
 function nameFix(s) {
-  return typeof s == "string" ? s.replace(/Kak Pemberani/g, KAK).replace(/Dik Jagoan/g, ADK) : s;
+  return typeof s == "string" ? s.replace(/\bSofia\b/g, KAK).replace(/\bAli\b/g, ADK) : s;
 }
 profLoadList();
 function gameSave(silent) {
@@ -7864,12 +7868,12 @@ function levelStory(n) {
   if (n == 1 && !storyIntro) {
     storyIntro = 1;
     L = [
-      [null, "Di Negeri Pelangi, Ummi dan Abi Kak Pemberani & Dik Jagoan disihir Kabut Jahil menjadi Raja Usil dan Ratu Jahil! Mereka lupa pada anak-anaknya, lalu menculik teman-teman kalian!"],
+      [null, "Di Negeri Pelangi, Ummi dan Abi Sofia & Ali disihir Kabut Jahil menjadi Raja Usil dan Ratu Jahil! Mereka lupa pada anak-anaknya, lalu menculik teman-teman kalian!"],
       ["oldwoman", "Jangan sedih, cucuku. Setiap 5 kemenangan, satu kenangan Ummi & Abi akan kembali. 📽️"],
       ["oldman", "Cucu-cucuku, teman kalian dikurung dalam kandang. Kuncinya, 3 Kunci Emas 🔑, disembunyikan di puncak menara batu."],
       ["oldwoman", "Kalian bisa bergantian bermain! Tekan tombol 🔄 Ganti kapan saja."],
-      ["girl", "Aku Kak Pemberani! Aku lari paling cepat. Kalau tombol lompat ditahan saat jatuh, aku bisa melayang! ✨"],
-      ["boy", "Aku Dik Jagoan! Aku bisa lompat dua kali di udara! 🐸"],
+      ["girl", "Aku Sofia! Aku lari paling cepat. Kalau tombol lompat ditahan saat jatuh, aku bisa melayang! ✨"],
+      ["boy", "Aku Ali! Aku bisa lompat dua kali di udara! 🐸"],
       ["oldman", "Oh iya! Ada jalan rahasia: berdiri di atas pipa ungu ⬇ untuk masuk ke bawah tanah, dan lompat ke trampolin awan ⬆ untuk terbang ke atas langit. Di sana ada Permata Rahasia 💎!"],
       ["oldwoman", "Ada 8 jalan rahasia di setiap level: pipa ungu, trampolin awan, pintu kristal, cincin pelangi, pipa emas, pintu pohon, bintang tersembunyi, dan lubang es biru!"],
       ["oldman", "Jangan lupa baca 3 Batu Cerita 📜 di setiap level, ya!"],
@@ -8493,7 +8497,7 @@ function update() {
           for (let y = 0; y < 13; y++) if (G[y][lockX] == 8) G[y][lockX] = 0;
         }
         const f = "npc" + cage.kid;
-        story([[f, "Hore! Aku bebas! Terima kasih, Kak Pemberani dan Dik Jagoan! 💕"], [null, "✅ Misi rahasia berhasil! +1 nyawa dan perisai 10 detik." + (needFree ? " Gerbang menuju Raja Usil sudah terbuka!" : "")]]);
+        story([[f, "Hore! Aku bebas! Terima kasih, Sofia dan Ali! 💕"], [null, "✅ Misi rahasia berhasil! +1 nyawa dan perisai 10 detik." + (needFree ? " Gerbang menuju Raja Usil sudah terbuka!" : "")]]);
       } else if (!cage.hint) {
         cage.hint = 120;
         parts.push({ k: "txt", s: "Butuh 3 🔑 (punya " + keyN + ")", x: cage.x + 26, y: cage.y - 20, life: 90 });
