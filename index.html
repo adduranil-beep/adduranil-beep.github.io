@@ -8641,7 +8641,7 @@ function update() {
   if (cage) {
     cage.t += 0.1;
     if (cage.hint > 0) cage.hint--;
-    if (!cage.freed && over(P, cage)) {
+    if (!cage.freed && (over(P, cage) || keyN >= 3 && Math.abs(P.x + 12 - (cage.x + cage.w / 2)) < 80 && Math.abs(P.y + 23 - (cage.y + cage.h / 2)) < 100)) {
       if (keyN >= 3) {
         cage.freed = true;
         addCoin(15);
@@ -8657,12 +8657,33 @@ function update() {
         story([[f, "Hore! Aku bebas! Terima kasih, Sofia dan Ali! 💕"], [null, "✅ Misi rahasia berhasil! +1 nyawa dan perisai 10 detik." + (needFree ? " Gerbang menuju Raja Usil sudah terbuka!" : "")]]);
       } else if (!cage.hint) {
         cage.hint = 120;
+        cageAsk();
         parts.push({ k: "txt", s: "Butuh 3 🔑 (punya " + keyN + ")", x: cage.x + 26, y: cage.y - 20, life: 90 });
       }
     }
     if (needFree && !cage.freed && G[0][lockX] == 8 && Math.abs(P.x + P.w - lockX * T) < 6 && !cage.hint) {
       cage.hint = 150;
-      parts.push({ k: "txt", s: "🔒 Bebaskan " + NM["npc" + cage.kid] + " dulu!", x: P.x, y: P.y - 30, life: 100 });
+      cageAsk();
+      parts.push({ k: "txt", s: "🔒 Bebaskan " + NM["npc" + cage.kid] + " dulu! Butuh 3 🔑 (punya " + keyN + ")", x: P.x, y: P.y - 30, life: 100 });
+    }
+  }
+  function cageAsk() {
+    if (keyN >= 3 || !cage) return;
+    cage.ask = (cage.ask || 0) + 1;
+    if (cage.ask < 2) return;
+    const miss = keys.filter((k) => !k.got);
+    if (!miss.length) return;
+    let gy = 13;
+    const cx = Math.floor((cage.x - 60) / T);
+    while (gy > 2 && G[gy - 1] && G[gy - 1][cx]) gy--;
+    miss.forEach((k, i) => {
+      k.x = cage.x - 60 - i * 44;
+      k.y = gy * T - 36;
+    });
+    parts.push({ k: "banner", s: "✨ Kunci yang tertinggal muncul di dekat kandang!", life: 150 });
+    try {
+      SFX.win();
+    } catch (e) {
     }
   }
   if (coinN >= 30) {
