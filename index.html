@@ -6991,7 +6991,7 @@ function gen(n) {
             w = 7;
             break;
           case 4:
-            for (let y = 10; y < 13; y++) {
+            for (let y = 10; y < 11; y++) {
               S(x, y);
               S(x + 5, y);
             }
@@ -7038,7 +7038,7 @@ function gen(n) {
             S(x - 1, 12);
             for (let y = 9; y < 13; y++) S(x, y);
             for (let i = 1; i < 5; i++) S(x + i, 9);
-            for (let y = 10; y < 13; y++) S(x + 5, y);
+            for (let y = 10; y < 11; y++) S(x + 5, y);
             coins.push({ x: (x + 2) * T + 16, y: 8 * T + 16, t: 0 }, { x: (x + 3) * T + 16, y: 8 * T + 16, t: 1 });
             w = 7;
             break;
@@ -7724,6 +7724,20 @@ function buildRoom2(type) {
 }
 const ROOM2 = ["cave", "candy", "treasure", "tree", "star", "ice"];
 const ROOMNM = { tree: "🌳 Rumah Pohon Rahasia!", star: "⭐ Ruang Bintang Rahasia! (lompatan ringan)", ice: "❄️ Gua Es Rahasia! (lantai licin)", under: "⬇️ Jalan Rahasia Bawah Tanah!", sky: "☁️ Jalan Rahasia di Atas Langit!", cave: "💠 Gua Kristal Rahasia!", candy: "🍭 Negeri Permen Rahasia!", treasure: "🏴‍☠️ Gua Harta Karun Bajak Laut!" };
+function coinFix() {
+  try {
+    for (const c of coins) {
+      const tx = Math.floor(c.x / T);
+      let ty = Math.floor(c.y / T), n = 0;
+      while (ty > 0 && G[ty] && solid(G[ty][tx]) && n < 6) {
+        ty--;
+        n++;
+      }
+      if (n) c.y = ty * T + 16;
+    }
+  } catch (e) {
+  }
+}
 function enterRoom(type) {
   stat("secret");
   setTimeout(() => {
@@ -7747,6 +7761,7 @@ function enterRoom(type) {
   helpers = [];
   cpList = [];
   flagX = 1e9;
+  coinFix();
   P.x = 2 * T;
   P.y = type == "sky" ? 9 * T : type == "candy" || type == "star" ? 2 * T : type == "under" ? 2 * T + 10 : 10 * T;
   P.vx = 0;
@@ -8103,6 +8118,7 @@ function startLevel(n) {
   fwPlace();
   f3Place();
   qkReset();
+  coinFix();
   cpX = 3 * T;
   cpList = helpers.map((h) => h.x - T).concat(signs.map((s) => s.x - T), [checkpoint]).sort((a, b) => a - b);
   spawn();
