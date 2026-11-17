@@ -408,7 +408,11 @@ body:not(.ingame) #fsBtn{display:none!important}
 <div id="shop" class="hide"><div id="shopBody"></div></div>
 <div class="screen hide" id="msg"><h1 id="msgT"></h1><p id="msgP"></p><button class="big" id="msgB">Main Lagi</button></div>
 
-<script>(function() {
+<script>["keydown", "keyup", "keypress"].forEach((t) => addEventListener(t, (e) => {
+  const g = e.target;
+  if (g && (g.tagName == "INPUT" || g.tagName == "TEXTAREA") && g.id != "nmIn0x") e.stopImmediatePropagation();
+}, true));
+(function() {
   var AP = Array.prototype;
   if (!AP.flat) AP.flat = function(d) {
     d = d === void 0 ? 1 : d;
@@ -1695,6 +1699,8 @@ function netRoomApi() {
       const peers = {}, conns = {};
       let cb = null, last2 = "", lastT = 0, lastPl = "", pend = null, timer = null, seq = 0, closed = false, first = null;
       const R = { kind: "net", me, lost: false };
+      const seenM = {};
+      let seenN = 0;
       const fire = () => {
         if (cb) try {
           cb();
@@ -1705,6 +1711,25 @@ function netRoomApi() {
       const onMsg = (topic, pl) => {
         const id = topic.slice(topic.lastIndexOf("/") + 1);
         if (id === me) return;
+        if (topic.indexOf(base + "m/") === 0) {
+          let o2 = null;
+          try {
+            o2 = JSON.parse(pl);
+          } catch (e) {
+          }
+          if (o2 && o2.k && !seenM[o2.k]) {
+            if (++seenN > 3e3) {
+              for (const k in seenM) delete seenM[k];
+              seenN = 0;
+            }
+            seenM[o2.k] = 1;
+            if (R.onSay) try {
+              R.onSay(o2, id);
+            } catch (e) {
+            }
+          }
+          return;
+        }
         let o = null;
         try {
           o = pl ? JSON.parse(pl) : null;
@@ -1739,6 +1764,7 @@ function netRoomApi() {
           }
           conns[u] = c;
           c.sub(base + "p/+");
+          c.sub(base + "m/+");
           R.lost = false;
           if (lastPl) c.pub(myT, lastPl);
           if (first) {
@@ -1801,6 +1827,10 @@ function netRoomApi() {
         },
         onPeers(f) {
           cb = f;
+        },
+        say(o) {
+          const s = JSON.stringify(o);
+          for (const c of live()) c.pub(base + "m/" + me, s);
         },
         async leave() {
           closed = true;
@@ -4082,6 +4112,437 @@ function qkBg() {
   }
   ctx.globalAlpha = 1;
 }
+const CH = { out: null, seen: {}, log: [], open: false, lastSend: 0, hear: true, unread: 0 };
+try {
+  CH.hear = localStorage.kkadHear !== "0";
+} catch (e) {
+}
+const CHQ = ["👋 Halo!", "🙏 Tolong aku!", "⏳ Tunggu ya!", "➡️ Ayo lanjut!", "🎉 Hebat!", "👍 Oke!", "😂", "❤️"];
+const CHBAD = ["anjing", "anjir", "bangsat", "babi", "goblok", "tolol", "bego", "kontol", "memek", "ngentot", "bajingan", "kampret", "setan", "tai", "asu", "jancok", "fuck", "shit", "bitch"];
+function chClean(t) {
+  t = String(t || "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
+  CHBAD.forEach((w) => {
+    t = t.replace(new RegExp("\\b" + w + "\\b", "gi"), "*".repeat(w.length));
+  });
+  return t;
+}
+function chName(r) {
+  return r == 2 ? ADK : KAK;
+}
+function chWrap(rm) {
+  if (!rm || rm._chw) return rm;
+  rm._chw = 1;
+  const op = rm.presence.bind(rm);
+  rm.presence = (d) => op(d && CH.out && typeof d == "object" ? Object.assign({}, d, { ch: CH.out }) : d);
+  if (rm.say !== void 0 || rm.kind == "net") rm.onSay = chOnSay;
+  return rm;
+}
+function chBeep() {
+  try {
+    if (!AC) return;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.value = 880;
+    o.frequency.setValueAtTime(660, AC.currentTime + 0.08);
+    g.gain.value = 0.06;
+    g.gain.exponentialRampToValueAtTime(1e-3, AC.currentTime + 0.22);
+    o.connect(g);
+    g.connect(AC.destination);
+    o.start();
+    o.stop(AC.currentTime + 0.24);
+  } catch (e) {
+  }
+}
+function chToast(html, r) {
+  let t = document.getElementById("chToast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "chToast";
+    document.body.appendChild(t);
+  }
+  const d = document.createElement("div");
+  d.className = "chT " + (r == 2 ? "b" : r == 1 ? "g" : "s");
+  d.innerHTML = html;
+  t.appendChild(d);
+  while (t.children.length > 3) t.removeChild(t.firstChild);
+  setTimeout(() => {
+    d.classList.add("out");
+    setTimeout(() => d.remove(), 400);
+  }, 5200);
+}
+function chAdd(r, txt, mine) {
+  const m = { r, x: txt, mine };
+  CH.log.push(m);
+  if (CH.log.length > 30) CH.log.shift();
+  if (!mine) {
+    chBeep();
+    chToast("<b>" + chName(r) + ":</b> " + txt, r);
+    if (!CH.open) {
+      CH.unread++;
+    }
+  }
+  chRender();
+}
+function chGot(o, from) {
+  if (!o || !o.i || CH.seen[o.i]) return;
+  CH.seen[o.i] = 1;
+  chAdd(o.r, chClean(o.x), false);
+}
+function chOnSay(o, from) {
+  if (!o) return;
+  if (o.t == "c") chGot(o, from);
+  else if (o.t == "v") voGot(o, from);
+}
+function chSend(txt) {
+  txt = chClean(txt);
+  if (!txt || !CO.rm) return;
+  const now = Date.now();
+  if (now - CH.lastSend < 700) return;
+  CH.lastSend = now;
+  const id = Math.random().toString(36).slice(2, 9);
+  CH.out = { i: id, x: txt, r: CO.role };
+  CH.seen[id] = 1;
+  try {
+    if (CO.rm.say) CO.rm.say({ t: "c", k: "c" + id, i: id, x: txt, r: CO.role });
+  } catch (e) {
+  }
+  try {
+    coopSend();
+  } catch (e) {
+  }
+  chAdd(CO.role, txt, true);
+}
+function chRender() {
+  const lg = document.getElementById("chLog");
+  if (lg) {
+    lg.innerHTML = CH.log.length ? CH.log.map((m) => '<div class="chM ' + (m.mine ? "me " : "") + (m.r == 2 ? "b" : "g") + '"><small>' + (m.mine ? "Kamu" : chName(m.r)) + "</small>" + m.x + "</div>").join("") : '<div class="chE">Belum ada pesan. Sapa temanmu! 👋</div>';
+    lg.scrollTop = 1e5;
+  }
+  const n = document.getElementById("chN");
+  if (n) {
+    n.textContent = CH.unread > 9 ? "9+" : CH.unread;
+    n.style.display = CH.unread ? "" : "none";
+  }
+  const h = document.getElementById("chHear");
+  if (h) h.textContent = CH.hear ? "🔊 Suara teman: NYALA" : "🔇 Suara teman: MATI";
+}
+function chPanel(on) {
+  CH.open = on;
+  let p = document.getElementById("chPan");
+  if (!on) {
+    if (p) p.remove();
+    return;
+  }
+  if (!p) {
+    p = document.createElement("div");
+    p.id = "chPan";
+    p.innerHTML = '<div class="chHd"><b>💬 Obrolan</b><button id="chX">✕</button></div><div id="chLog"></div><div class="chQ">' + CHQ.map((q) => "<button>" + q + "</button>").join("") + '</div><form id="chF"><input id="chIn" maxlength="80" autocomplete="off" placeholder="Ketik pesan…"><button>Kirim</button></form><button id="chHear"></button>' + (window.isSecureContext && navigator.mediaDevices ? '<div class="chTip">🎙️ Tahan tombol mikrofon untuk bicara, atau ketuk sekali lalu ketuk lagi untuk berhenti.</div>' : "");
+    document.body.appendChild(p);
+    p.querySelector("#chX").onclick = () => chPanel(false);
+    p.querySelectorAll(".chQ button").forEach((b) => b.onclick = () => chSend(b.textContent));
+    p.querySelector("#chF").onsubmit = (e) => {
+      e.preventDefault();
+      const i = document.getElementById("chIn");
+      chSend(i.value);
+      i.value = "";
+      i.blur();
+    };
+    p.querySelector("#chHear").onclick = () => {
+      CH.hear = !CH.hear;
+      try {
+        localStorage.kkadHear = CH.hear ? "1" : "0";
+      } catch (e) {
+      }
+      chRender();
+    };
+    ["pointerdown", "touchstart", "mousedown", "click"].forEach((ev) => p.addEventListener(ev, (e) => e.stopPropagation()));
+  }
+  CH.unread = 0;
+  chRender();
+}
+const VO = { on: false, id: "", n: 0, buf: [], t: 0, st: 0, src: null, sp: null, stream: null, tm: null };
+function voMu(x) {
+  const s = x < 0 ? 128 : 0;
+  x = Math.min(32635, Math.abs(x) * 32767) + 132;
+  let e = 7;
+  for (let m = 16384; (x & m) === 0 && e > 0; m >>= 1) e--;
+  return ~(s | e << 4 | x >> e + 3 & 15) & 255;
+}
+function voUnMu(u) {
+  u = ~u & 255;
+  const s = u & 128, e = u >> 4 & 7, m = u & 15;
+  let x = (m << 3) + 132 << e;
+  x -= 132;
+  return (s ? -x : x) / 32768;
+}
+function voFlush(fin) {
+  if (!VO.buf.length && !fin) return;
+  const a = VO.buf;
+  VO.buf = [];
+  const u = new Uint8Array(a.length);
+  for (let i = 0; i < a.length; i++) u[i] = voMu(Math.max(-1, Math.min(1, a[i] * 1.6)));
+  let b = "";
+  for (let i = 0; i < u.length; i += 4096) b += String.fromCharCode.apply(null, u.subarray(i, i + 4096));
+  try {
+    CO.rm && CO.rm.say && CO.rm.say({ t: "v", k: VO.id + "." + VO.n, id: VO.id, n: VO.n++, a: btoa(b), r: CO.role, e: fin ? 1 : 0 });
+  } catch (e) {
+  }
+}
+async function voStart() {
+  if (VO.on) return;
+  if (!CO.rm || !CO.rm.say) {
+    chToast("🎙️ Suara hanya bisa di versi web (link)", "s");
+    return;
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    chToast("🎙️ HP ini belum mendukung mikrofon di browser", "s");
+    return;
+  }
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    AC.resume();
+  } catch (e) {
+  }
+  VO.on = true;
+  voBtn();
+  try {
+    VO.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+  } catch (e) {
+    VO.on = false;
+    voBtn();
+    chToast('🎙️ Izinkan mikrofon dulu ya (ketuk "Izinkan")', "s");
+    return;
+  }
+  if (!VO.on) {
+    voStop();
+    return;
+  }
+  VO.id = Math.random().toString(36).slice(2, 8);
+  VO.n = 0;
+  VO.buf = [];
+  VO.t = 0;
+  VO.st = Date.now();
+  const R = AC.sampleRate / 8e3;
+  VO.src = AC.createMediaStreamSource(VO.stream);
+  VO.sp = AC.createScriptProcessor(4096, 1, 1);
+  VO.sp.onaudioprocess = (ev) => {
+    if (!VO.on) return;
+    const d = ev.inputBuffer.getChannelData(0), n = d.length;
+    let t = VO.t;
+    while (t + R <= n) {
+      const a = Math.max(0, Math.floor(t)), b = Math.floor(t + R);
+      let s = 0;
+      for (let k = a; k < b; k++) s += d[k];
+      VO.buf.push(s / (b - a || 1));
+      t += R;
+    }
+    VO.t = t - n;
+    if (VO.buf.length >= 4e3) voFlush(false);
+    if (Date.now() - VO.st > 15e3) voStop();
+  };
+  VO.src.connect(VO.sp);
+  VO.sp.connect(AC.destination);
+}
+function voStop() {
+  const was = VO.on;
+  VO.on = false;
+  try {
+    VO.sp && VO.sp.disconnect();
+    VO.src && VO.src.disconnect();
+  } catch (e) {
+  }
+  VO.sp = VO.src = null;
+  try {
+    VO.stream && VO.stream.getTracks().forEach((t) => t.stop());
+  } catch (e) {
+  }
+  VO.stream = null;
+  if (was && VO.id) voFlush(true);
+  VO.id = "";
+  voBtn();
+}
+function voBtn() {
+  const b = document.getElementById("chMic");
+  if (b) {
+    b.classList.toggle("rec", VO.on);
+    b.innerHTML = VO.on ? "🔴<small>Bicara…</small>" : "🎙️";
+  }
+}
+const VR = { q: {}, who: null, next: 0, last: 0 };
+function voGot(o, from) {
+  if (!CH.hear || !o.a) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state == "suspended") AC.resume();
+  } catch (e) {
+    return;
+  }
+  let q = VR.q[o.id];
+  if (!q) {
+    q = VR.q[o.id] = { n: 0, c: {}, t: Date.now() };
+    for (const k in VR.q) if (Date.now() - VR.q[k].t > 6e4) delete VR.q[k];
+  }
+  q.c[o.n] = o;
+  q.t = Date.now();
+  VR.who = o.r;
+  VR.last = Date.now();
+  voPump(o.id);
+}
+function voPump(id) {
+  const q = VR.q[id];
+  if (!q) return;
+  for (; ; ) {
+    let o = q.c[q.n];
+    if (!o) {
+      const ks = Object.keys(q.c).map(Number).filter((k) => k > q.n);
+      if (ks.length && Date.now() - q.t > 500) {
+        q.n = Math.min.apply(null, ks);
+        continue;
+      }
+      if (ks.length) setTimeout(() => voPump(id), 520);
+      return;
+    }
+    delete q.c[q.n];
+    q.n++;
+    try {
+      const raw = atob(o.a), N = raw.length, R = AC.sampleRate / 8e3, M = Math.floor(N * R);
+      if (!M) continue;
+      const buf = AC.createBuffer(1, M, AC.sampleRate), ch = buf.getChannelData(0);
+      const f = new Float32Array(N);
+      for (let i = 0; i < N; i++) f[i] = voUnMu(raw.charCodeAt(i));
+      for (let i = 0; i < M; i++) {
+        const p = i / R, a = Math.floor(p), fr = p - a;
+        ch[i] = f[a] * (1 - fr) + (f[a + 1] !== void 0 ? f[a + 1] : f[a]) * fr;
+      }
+      const s = AC.createBufferSource(), g = AC.createGain();
+      g.gain.value = 1.4;
+      s.buffer = buf;
+      s.connect(g);
+      g.connect(AC.destination);
+      const at = Math.max(AC.currentTime + 0.12, VR.next);
+      s.start(at);
+      VR.next = at + buf.duration;
+      VR.last = Date.now() + buf.duration * 1e3;
+    } catch (e) {
+    }
+  }
+}
+function chTick() {
+  const on = !!(CO.on && CO.rm);
+  let w = document.getElementById("chBtns");
+  if (!on) {
+    if (w) w.remove();
+    if (CH.open) chPanel(false);
+    if (VO.on) voStop();
+    return;
+  }
+  if (!w) {
+    w = document.createElement("div");
+    w.id = "chBtns";
+    w.innerHTML = '<button id="chOpen">💬<span id="chN" style="display:none"></span></button>' + (CO.rm.say ? '<button id="chMic">🎙️</button>' : "");
+    document.body.appendChild(w);
+    const st = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    w.querySelector("#chOpen").addEventListener("click", (e) => {
+      st(e);
+      chPanel(!CH.open);
+    });
+    ["touchstart", "touchend", "pointerdown", "mousedown"].forEach((ev) => w.querySelector("#chOpen").addEventListener(ev, (e) => e.stopPropagation()));
+    const m = w.querySelector("#chMic");
+    if (m) {
+      let t0 = 0, tog = false;
+      const dn = (e) => {
+        st(e);
+        if (VO.on && tog) {
+          tog = false;
+          voStop();
+          t0 = -1;
+          return;
+        }
+        t0 = Date.now();
+        voStart();
+      };
+      const up = (e) => {
+        st(e);
+        if (t0 < 0) {
+          t0 = 0;
+          return;
+        }
+        if (!VO.on && !t0) return;
+        if (Date.now() - t0 < 350) {
+          tog = true;
+        } else {
+          tog = false;
+          voStop();
+        }
+        t0 = 0;
+      };
+      if (window.PointerEvent) {
+        m.addEventListener("pointerdown", dn);
+        m.addEventListener("pointerup", up);
+        m.addEventListener("pointercancel", up);
+      } else {
+        m.addEventListener("touchstart", dn);
+        m.addEventListener("touchend", up);
+        m.addEventListener("mousedown", dn);
+        m.addEventListener("mouseup", up);
+      }
+      m.addEventListener("contextmenu", (e) => e.preventDefault());
+    }
+    chRender();
+  }
+  try {
+    CO.rm.peers().filter((p) => !p.isMe).forEach((p) => {
+      const c = p.presence && p.presence.ch;
+      if (c) chGot(c, p.peer);
+    });
+  } catch (e) {
+  }
+  const sp = Date.now() < VR.last + 300;
+  let ind = document.getElementById("chSpk");
+  if (sp) {
+    if (!ind) {
+      ind = document.createElement("div");
+      ind.id = "chSpk";
+      document.body.appendChild(ind);
+    }
+    ind.className = VR.who == 2 ? "b" : "g";
+    ind.textContent = "🔊 " + chName(VR.who) + " bicara…";
+  } else if (ind) ind.remove();
+}
+setInterval(() => {
+  try {
+    chTick();
+  } catch (e) {
+  }
+}, 250);
+(function() {
+  const st = document.createElement("style");
+  st.textContent = `
+#chBtns{position:fixed;left:8px;top:42%;z-index:60;display:flex;flex-direction:column;gap:10px}
+#chBtns button{position:relative;width:48px;height:48px;border-radius:50%;border:3px solid #fff;background:#7e57c2;color:#fff;font-size:22px;box-shadow:0 3px 8px #0006;padding:0;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#chMic{background:#26a69a!important}#chMic.rec{background:#e53935!important;width:64px!important;height:64px!important;border-radius:32px!important;font-size:20px!important;animation:chPu 1s infinite}
+#chMic small{display:block;font-size:10px;font-weight:700;line-height:1}
+@keyframes chPu{50%{box-shadow:0 0 0 10px #e5393555}}
+#chN{position:absolute;top:-6px;right:-6px;background:#ff1744;color:#fff;border-radius:10px;font-size:11px;font-weight:800;min-width:18px;height:18px;line-height:18px;padding:0 4px}
+#chToast{position:fixed;top:88px;left:50%;transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;width:min(92vw,420px)}
+.chT{background:#fffffff0;border-radius:14px;padding:6px 12px;font:600 14px system-ui,sans-serif;color:#333;box-shadow:0 3px 10px #0005;border-left:6px solid #ec407a;max-width:100%;word-wrap:break-word;transition:opacity .4s}
+.chT.b{border-left-color:#1e88e5}.chT.s{border-left-color:#ffa000}.chT.out{opacity:0}
+#chSpk{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:71;color:#fff;font:800 13px system-ui,sans-serif;padding:5px 14px;border-radius:14px;background:#ec407a;box-shadow:0 2px 8px #0006;animation:chPu 1s infinite;pointer-events:none}#chSpk.b{background:#1e88e5}
+#chPan{color:#333;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;width:min(94vw,380px);max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:18px;box-shadow:0 8px 30px #0008;padding:10px;font-family:system-ui,sans-serif;box-sizing:border-box}
+.chHd{display:flex;justify-content:space-between;align-items:center;font-size:16px;color:#5e35b1;margin-bottom:6px}.chHd button{border:0;background:#eee;border-radius:50%;width:34px;height:34px;font-size:16px}
+#chLog{flex:1 1 auto;min-height:60px;max-height:34vh;overflow-y:auto;background:#f3effa;border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:4px}
+.chM{align-self:flex-start;background:#fff;border-radius:12px;padding:4px 10px;font-size:14px;max-width:85%;word-wrap:break-word;border-left:4px solid #ec407a}.chM.b{border-left-color:#1e88e5}.chM.me{align-self:flex-end;background:#e8f5e9}
+.chM small{display:block;font-size:10px;color:#888;font-weight:700}.chE{color:#888;font-size:13px;text-align:center;padding:10px}
+.chQ{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0}.chQ button{border:0;border-radius:10px;background:#ede7f6;font-size:12px;font-weight:700;min-height:38px;padding:2px}
+#chF{display:flex;gap:6px}#chIn{flex:1;min-width:0;border:2px solid #b39ddb;border-radius:12px;padding:8px;font-size:16px}#chF button{border:0;border-radius:12px;background:#7e57c2;color:#fff;font-weight:800;padding:0 14px;min-height:40px}
+#chHear{margin-top:6px;border:0;border-radius:10px;background:#e0f2f1;font-weight:700;min-height:34px;font-size:13px}.chTip{font-size:11px;color:#777;margin-top:5px;text-align:center}
+body.portrait #chToast{top:190px}
+@media (orientation:landscape) and (max-height:420px){#chBtns{top:118px;flex-direction:row}#chBtns button{width:42px;height:42px;font-size:19px}#chMic.rec{width:56px!important;height:56px!important}#chLog{max-height:22vh}.chQ{grid-template-columns:repeat(8,1fr)}.chQ button{min-height:32px;font-size:11px}#chToast{top:70px}#chPan{max-height:96vh}.chTip{display:none}}
+`;
+  document.head.appendChild(st);
+})();
 let FWG = [], FW = null, FWf = 360, FWyH = 175, FWch = 1.5;
 const FWRW = 3, FWPD = 3.2, FWDF = 72, FWDN = 1;
 const FWNAME = { hutan: "Hutan kiri-kanan 🌳", kebun: "Kebun kiri-kanan 🌻", sungai: "Sungai kiri-kanan 🏞️", gurun: "Gurun kiri-kanan 🌵", desa: "Desa kiri-kanan 🏡", kastil: "Lorong kastil 🏰", salju: "Hutan salju ❄️", lava: "Sungai lava kiri-kanan 🌋", langit: "Jalan pelangi di awan ☁️", gua: "Lorong gua kristal 💎", dino: "Hutan purba & dinosaurus 🐉" };
@@ -12081,12 +12542,12 @@ async function coopStart(code, role) {
     if (CO.rm) await CO.rm.leave();
     CO.code = code;
     try {
-      CO.rm = await CO.api.join("kkad-" + code);
+      CO.rm = chWrap(await CO.api.join("kkad-" + code));
     } catch (e0) {
       if (CO.net) throw e0;
       CO.api = netRoomApi();
       CO.net = true;
-      CO.rm = await CO.api.join("kkad-" + code);
+      CO.rm = chWrap(await CO.api.join("kkad-" + code));
     }
     CO.on = true;
     CO.status = "⏳ Menunggu teman… Kode: " + code;
@@ -19019,7 +19480,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
