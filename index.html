@@ -4204,7 +4204,7 @@ function chWrap(rm) {
   if (!rm || rm._chw) return rm;
   rm._chw = 1;
   const op = rm.presence.bind(rm);
-  rm.presence = (d) => op(d && CH.out && typeof d == "object" ? Object.assign({}, d, { ch: CH.out }) : d);
+  rm.presence = (d) => op(d && typeof d == "object" && (CH.out || typeof PN != "undefined" && PN.on) ? Object.assign({}, d, CH.out ? { ch: CH.out } : {}, typeof PN != "undefined" && PN.on ? { pn: { g: PN.g, h: +PN.h.toFixed(3), w: PN.w || 0 } } : {}) : d);
   if (rm.say !== void 0 || rm.kind == "net") rm.onSay = chOnSay;
   return rm;
 }
@@ -4263,6 +4263,7 @@ function chOnSay(o, from) {
   if (!o) return;
   if (o.t == "c") chGot(o, from);
   else if (o.t == "v") voGot(o, from);
+  else if (o.t == "pn" || o.t == "pnA") pnOnSay(o, from);
 }
 function chSend(txt) {
   txt = chClean(txt);
@@ -4707,6 +4708,586 @@ setInterval(() => {
   } catch (e) {
   }
 }, 700);
+let PNG = null;
+const PN = { on: false, g: "", h: 0, oh: 0, w: 0, st: "", opp: null, cpu: null, t: 0, cd: 0, prize: null, res: null, taps: 0, slipT: 0, oslipT: 0, fx: [], wait: 0 };
+const PNDOLL = ["🧸", "🐰", "🐻", "🦄", "🐼", "🐶"];
+function pnPlace() {
+  PNG = null;
+  try {
+    if (room) return;
+    const A1 = AREAX[1] < W ? AREAX[1] : Math.floor(W / 3), A2 = AREAX[2] < W ? AREAX[2] : Math.floor(W * 2 / 3);
+    const tries = [Math.floor(A1 + (A2 - A1) * 0.6), Math.floor(A1 * 0.7), Math.floor(A2 + (W - A2) * 0.4)];
+    for (const tg of tries) {
+      for (let k = 0; k < 90; k++) {
+        const x = tg + (k % 2 ? 1 : -1) * Math.ceil(k / 2);
+        if (x < 14 || x > W - 24) continue;
+        if (arena && x * T > arena.x0 - 12 * T) continue;
+        if ((FWG || []).some((g) => Math.abs(g.x - x) < 10)) continue;
+        if (F3G && Math.abs(F3G.x - x) < 10) continue;
+        if (typeof cage != "undefined" && cage && Math.abs(cage.x / T - x) < 8) continue;
+        if (fwOK(x)) {
+          PNG = { x, used: 0, cd: 0, t: 0 };
+          ents = ents.filter((e) => Math.abs(e.x - (x * T + 64)) > T * 5);
+          return;
+        }
+      }
+    }
+  } catch (e) {
+  }
+}
+function pnDraw() {
+  const g = PNG;
+  if (!g || room) return;
+  const x = g.x * T + 2 * T, y = 13 * T;
+  if (x + 120 < cam || x - 120 > cam + VW) return;
+  g.t++;
+  const t = g.t;
+  ctx.save();
+  ctx.fillStyle = "rgba(0,0,0,.18)";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 26, 6, 0, 0, 7);
+  ctx.fill();
+  const pg = ctx.createLinearGradient(x - 7, 0, x + 7, 0);
+  pg.addColorStop(0, "#5d4037");
+  pg.addColorStop(0.45, "#a1887f");
+  pg.addColorStop(1, "#4e342e");
+  ctx.fillStyle = pg;
+  ctx.fillRect(x - 6, y - 170, 12, 170);
+  ctx.fillStyle = "rgba(255,255,255,.35)";
+  ctx.fillRect(x - 2, y - 170 + t * 2 % 150, 2, 18);
+  ctx.strokeStyle = "#ffca28";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.ellipse(x, y - 170, 34, 8, 0, 0, 7);
+  ctx.stroke();
+  const sw2 = Math.sin(t * 0.06) * 0.15;
+  ["🎁", "🧸", g.used ? "✔" : "🎈", "🚩"].forEach((e, i) => {
+    const a = -1 + i * 0.66;
+    ctx.save();
+    ctx.translate(x + a * 30, y - 168);
+    ctx.rotate(sw2);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 14);
+    ctx.stroke();
+    ctx.font = "15px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(e, 0, 30);
+    ctx.restore();
+  });
+  ctx.fillStyle = "#e53935";
+  ctx.fillRect(x + 1, y - 196, 18, 7);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(x + 1, y - 189, 18, 7);
+  ctx.fillStyle = "#795548";
+  ctx.fillRect(x - 1, y - 198, 2, 28);
+  rr(x - 84, y - 226, 168, 26, 9, "rgba(0,0,0,.65)");
+  ctx.font = "bold 13px Fredoka";
+  ctx.fillStyle = g.used ? "#a5d6a7" : "#ffd54f";
+  ctx.textAlign = "center";
+  ctx.fillText(g.used ? "✔ Sudah ikut lomba!" : "🏁 Lomba Panjat Pinang!", x, y - 208);
+  if (!g.used) {
+    ctx.font = "26px sans-serif";
+    ctx.fillText("⬆", x - 46, y - 60 + Math.sin(t * 0.15) * 6);
+    ctx.fillText("⬆", x + 46, y - 60 + Math.cos(t * 0.15) * 6);
+  }
+  ctx.restore();
+}
+function pnCheck() {
+  const g = PNG;
+  if (!g || g.used || room || state != "play" || !P || PN.on) return;
+  if (g.cd > 0) {
+    g.cd--;
+    return;
+  }
+  const cx = P.x + 12, px = g.x * T + 2 * T;
+  if (Math.abs(cx - px) < 30 && P.ground) pnEnter({ host: 1 });
+}
+function pnPeers() {
+  try {
+    return CO.rm ? CO.rm.peers().filter((p) => !p.sameTab && p.presence && p.presence.v == 2) : [];
+  } catch (e) {
+    return [];
+  }
+}
+function pnRival(h) {
+  return { girl: "boy", boy: "girl", abi: "ummi", ummi: "abi" }[h] || "boy";
+}
+function pnEnter(o) {
+  if (PN.on) return;
+  PN.on = true;
+  PN.g = o.gid || Math.random().toString(36).slice(2, 8);
+  PN.h = 0;
+  PN.oh = 0;
+  PN.w = 0;
+  PN.res = null;
+  PN.t = 0;
+  PN.taps = 0;
+  PN.fx = [];
+  PN.slipT = 200;
+  PN.oslipT = 240;
+  PN.cpu = null;
+  PN.opp = o.opp || null;
+  PN.oppH = o.oppH || null;
+  PN.oppNm = o.oppNm || "";
+  const pid = BANK.pet && BANK.pet[hero];
+  PN.prize = PETS[pid] && Math.random() < 0.5 ? { k: "pet", id: pid } : { k: "doll", e: PNDOLL[Math.floor(Math.random() * PNDOLL.length)] };
+  PN.oprize = { k: "doll", e: PNDOLL[Math.floor(Math.random() * PNDOLL.length)] };
+  const prevState = state;
+  PN.prev = prevState;
+  state = "pinang";
+  key.L = key.R = key.J = 0;
+  try {
+    musPlay("village", 4);
+  } catch (e) {
+  }
+  pnUI();
+  if (o.host) {
+    const ps = pnPeers();
+    if (ps.length && CO.rm && CO.rm.say) {
+      PN.st = "wait";
+      PN.wait = Date.now();
+      try {
+        CO.rm.say({ t: "pn", k: "pn" + PN.g, gid: PN.g, h: hero, nm: HN(hero), lv: level });
+      } catch (e) {
+      }
+    } else pnCPU();
+  } else {
+    PN.st = "cd";
+    PN.cd = Date.now();
+  }
+  pnLoop();
+}
+function pnCPU() {
+  PN.opp = null;
+  PN.oppH = pnRival(hero);
+  PN.oppNm = "🤖 Komputer";
+  PN.cpu = { next: 0, rate: 2.5 + Math.min(1.4, level * 0.05) };
+  PN.st = "cd";
+  PN.cd = Date.now();
+}
+function pnOnSay(o, from) {
+  if (o.t == "pn") {
+    if (PN.on || state != "play" || room) return;
+    pnInvite(o, from);
+  } else if (o.t == "pnA") {
+    if (PN.on && PN.st == "wait" && o.gid == PN.g && !PN.opp) {
+      PN.opp = from;
+      PN.oppH = o.h;
+      PN.oppNm = o.nm || HN(o.h);
+      PN.st = "cd";
+      PN.cd = Date.now();
+    }
+  }
+}
+function pnInvite(o, from) {
+  let d = document.getElementById("pnInv");
+  if (d) d.remove();
+  d = document.createElement("div");
+  d.id = "pnInv";
+  d.innerHTML = "<div>🏁 <b>" + String(o.nm || "Teman").replace(/[<>&]/g, "") + '</b> mengajak <b>Lomba Panjat Pinang!</b></div><button>Ikut Lomba!</button><span id="pnInvT">7</span>';
+  document.body.appendChild(d);
+  let n = 7;
+  const tm = setInterval(() => {
+    n--;
+    const s = document.getElementById("pnInvT");
+    if (s) s.textContent = n;
+    if (n <= 0) {
+      clearInterval(tm);
+      d.remove();
+    }
+  }, 1e3);
+  d.querySelector("button").onclick = (e) => {
+    e.stopPropagation();
+    clearInterval(tm);
+    d.remove();
+    if (state != "play" || PN.on) return;
+    try {
+      CO.rm.say({ t: "pnA", k: "pnA" + o.gid + Math.random(), gid: o.gid, h: hero, nm: HN(hero) });
+    } catch (err) {
+    }
+    pnEnter({ gid: o.gid, opp: from, oppH: o.h, oppNm: o.nm });
+  };
+  ["pointerdown", "touchstart", "mousedown"].forEach((ev) => d.addEventListener(ev, (e) => e.stopPropagation()));
+}
+function pnTap() {
+  if (!PN.on || PN.st != "go") return;
+  PN.taps++;
+  const top = PN.h > 0.85 ? 0.8 : 1;
+  PN.h = Math.min(1, PN.h + 0.034 * top);
+  PN.arm = 1;
+  try {
+    snd(420 + PN.h * 500, 0.05, "triangle");
+  } catch (e) {
+  }
+  if (PN.h >= 1 && !PN.res) pnEnd(true);
+}
+function pnUI() {
+  let ov = document.getElementById("pnOv");
+  if (ov) ov.remove();
+  ov = document.createElement("div");
+  ov.id = "pnOv";
+  ov.innerHTML = '<canvas id="pnC"></canvas><div class="pnTop"><span id="pnMsg">🏁 Lomba Panjat Pinang</span><button id="pnX">✕</button></div><button id="pnBtn">⬆<b>PANJAT!</b><small>ketuk cepat-cepat</small></button><div id="pnRes" class="hide"></div>';
+  document.body.appendChild(ov);
+  const b = ov.querySelector("#pnBtn");
+  const tap = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    pnTap();
+  };
+  if (window.PointerEvent) b.addEventListener("pointerdown", tap);
+  else {
+    b.addEventListener("touchstart", tap);
+    b.addEventListener("mousedown", tap);
+  }
+  ov.querySelector("#pnC").addEventListener(window.PointerEvent ? "pointerdown" : "touchstart", tap);
+  ov.querySelector("#pnX").onclick = (e) => {
+    e.stopPropagation();
+    if (PN.st == "done") pnExit();
+    else if (confirm2()) pnEnd(false, true);
+  };
+  ["pointerdown", "touchstart", "mousedown", "click"].forEach((ev) => ov.addEventListener(ev, (e) => e.stopPropagation()));
+}
+function confirm2() {
+  return true;
+}
+addEventListener("keydown", (e) => {
+  if (!PN.on) return;
+  if ([" ", "ArrowUp", "w", "W", "Enter"].includes(e.key)) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (!e.repeat) pnTap();
+  }
+}, true);
+function pnEnd(win, quit) {
+  if (PN.res) return;
+  try {
+    document.getElementById("pnBtn").style.display = "none";
+  } catch (e) {
+  }
+  PN.res = win ? "win" : "lose";
+  PN.w = win ? PN.g : 0;
+  PN.st = "done";
+  try {
+    coopSend();
+  } catch (e) {
+  }
+  let html = "";
+  if (win) {
+    const pz = PN.prize;
+    let got = "";
+    addCoin(15);
+    score += 1500;
+    if (pz.k == "pet") {
+      try {
+        petXP(120);
+      } catch (e) {
+      }
+      got = '<div class="pnPz"><img src="' + PETS[pz.id].src + '"></div><b>' + PETS[pz.id].n + " kamu dapat +120 EXP!</b>";
+    } else {
+      BANK.dolls = BANK.dolls || {};
+      BANK.dolls[pz.e] = (BANK.dolls[pz.e] || 0) + 1;
+      bankSave();
+      const tot = Object.values(BANK.dolls).reduce((a, b) => a + b, 0);
+      got = '<div class="pnPz">' + pz.e + "</div><b>Boneka " + pz.e + " masuk koleksi! (koleksi: " + tot + ")</b>";
+    }
+    try {
+      SFX.win();
+    } catch (e) {
+    }
+    html = '<div class="pnBig">🏆 MENANG!</div><div>Kamu sampai puncak duluan dan mengambil hadiahnya!</div>' + got + "<div>+15 💰</div>";
+  } else {
+    if (!quit) addCoin(3);
+    html = '<div class="pnBig">' + (quit ? "🏳️ Berhenti" : "😅 Kalah tipis!") + "</div><div>" + (quit ? "Lomba dibatalkan." : (PN.oppNm || "Lawan") + " sampai puncak duluan. Coba lagi di level berikutnya!") + "</div>" + (quit ? "" : "<div>Hadiah hiburan +3 💰</div>");
+  }
+  html += '<button id="pnBack">Kembali bertualang ▶</button>';
+  const r = document.getElementById("pnRes");
+  if (r) {
+    r.innerHTML = html;
+    r.classList.remove("hide");
+    r.querySelector("#pnBack").onclick = (e) => {
+      e.stopPropagation();
+      pnExit();
+    };
+  }
+  setTimeout(() => {
+    if (PN.on && PN.st == "done") pnExit();
+  }, 12e3);
+}
+function pnExit() {
+  if (!PN.on) return;
+  PN.on = false;
+  const ov = document.getElementById("pnOv");
+  if (ov) ov.remove();
+  if (PNG) {
+    PNG.used = 1;
+    PNG.cd = 60;
+  }
+  state = "play";
+  if (P) {
+    P.inv = Math.max(P.inv, 90);
+    P.vx = 0;
+  }
+  key.L = key.R = key.J = 0;
+  try {
+    musPlay(PLV[level - 1][0], PLV[level - 1][1]);
+  } catch (e) {
+  }
+  try {
+    coopSend();
+  } catch (e) {
+  }
+}
+function pnLoop() {
+  if (!PN.on) return;
+  requestAnimationFrame(pnLoop);
+  PN.t++;
+  const now = Date.now();
+  if (PN.st == "wait") {
+    const left = 6 - Math.floor((now - PN.wait) / 1e3);
+    pnSetMsg("🔎 Mencari lawan online… " + Math.max(0, left));
+    if (left <= 0) pnCPU();
+  }
+  if (PN.st == "cd") {
+    const c = 3 - Math.floor((now - PN.cd) / 1e3);
+    pnSetMsg(c > 0 ? "Siap… " + c : "MULAI! Ketuk PANJAT!");
+    if (c <= 0) {
+      PN.st = "go";
+      PN.go = now;
+      try {
+        snd(880, 0.3, "square");
+      } catch (e) {
+      }
+    }
+  }
+  if (PN.st == "go") {
+    PN.h = Math.max(0, PN.h - (7e-4 + 9e-4 * PN.h));
+    if (--PN.slipT <= 0) {
+      PN.slipT = 220 + Math.random() * 200;
+      if (PN.h > 0.15 && Math.random() < 0.55) {
+        PN.h = Math.max(0, PN.h - 0.06);
+        PN.fx.push({ w: 0, t: 0, s: "Licin! 💦" });
+      }
+    }
+    if (PN.cpu) {
+      const C = PN.cpu;
+      let rate = C.rate;
+      if (PN.oh > PN.h + 0.2) rate *= 0.75;
+      else if (PN.h > PN.oh + 0.25) rate *= 1.12;
+      if (now >= C.next) {
+        C.next = now + 1e3 / rate * (0.7 + Math.random() * 0.6);
+        PN.oh = Math.min(1, PN.oh + 0.034 * (PN.oh > 0.85 ? 0.8 : 1));
+        PN.oarm = 1;
+      }
+      PN.oh = Math.max(0, PN.oh - (7e-4 + 9e-4 * PN.oh));
+      if (--PN.oslipT <= 0) {
+        PN.oslipT = 220 + Math.random() * 200;
+        if (PN.oh > 0.15 && Math.random() < 0.55) {
+          PN.oh = Math.max(0, PN.oh - 0.06);
+          PN.fx.push({ w: 1, t: 0, s: "Licin! 💦" });
+        }
+      }
+      if (PN.oh >= 1 && !PN.res) pnEnd(false);
+    } else if (PN.opp) {
+      const p = pnPeers().find((q2) => q2.peer == PN.opp), q = p && p.presence && p.presence.pn;
+      if (q && q.g == PN.g) {
+        const nh = q.h || 0;
+        if (nh > PN.oh + 0.01) PN.oarm = 1;
+        PN.oh = nh;
+        if (q.w == PN.g && !PN.res) pnEnd(false);
+      } else if (!p && now - PN.go > 4e3) {
+        pnSetMsg("Lawan keluar — lanjut melawan komputer");
+        pnCPU();
+        PN.st = "go";
+      }
+    }
+    if (now - PN.go > 7e4 && !PN.res) pnEnd(PN.h >= PN.oh);
+    if (PN.t % 5 == 0 && CO.rm) try {
+      coopSend();
+    } catch (e) {
+    }
+    if (PN.t % 30 == 0) pnSetMsg(PN.h > PN.oh ? "💪 Kamu di depan!" : PN.oh > PN.h + 0.05 ? "⚡ Kejar! Ketuk lebih cepat!" : "🔥 Seru! Sama kuat!");
+  }
+  pnRender();
+}
+function pnSetMsg(s) {
+  const m = document.getElementById("pnMsg");
+  if (m && m._s !== s) {
+    m._s = s;
+    m.textContent = s;
+  }
+}
+function pnRender() {
+  const c = document.getElementById("pnC");
+  if (!c) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), w = c.clientWidth, h = c.clientHeight;
+  if (!w || !h) return;
+  if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+    c.width = Math.round(w * dpr);
+    c.height = Math.round(h * dpr);
+  }
+  const x = c.getContext("2d"), rc = ctx;
+  ctx = x;
+  try {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const t = PN.t;
+    const sk = ctx.createLinearGradient(0, 0, 0, h);
+    sk.addColorStop(0, "#4fc3f7");
+    sk.addColorStop(1, "#e1f5fe");
+    ctx.fillStyle = sk;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#fff59d";
+    ctx.beginPath();
+    ctx.arc(w * 0.86, h * 0.12, 28, 0, 7);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    [[0.15, 0.14], [0.5, 0.08], [0.72, 0.2]].forEach(([a, b], i) => {
+      const cx = (a * w + t * 0.2 * (i + 1)) % (w + 120) - 60;
+      ctx.beginPath();
+      ctx.arc(cx, b * h, 18, 0, 7);
+      ctx.arc(cx + 20, b * h - 8, 22, 0, 7);
+      ctx.arc(cx + 42, b * h, 16, 0, 7);
+      ctx.fill();
+    });
+    ctx.strokeStyle = "#795548";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.05);
+    ctx.quadraticCurveTo(w / 2, h * 0.13, w, h * 0.05);
+    ctx.stroke();
+    for (let i = 0; i < 24; i++) {
+      const fx = i / 23 * w, fy = h * 0.05 + Math.sin(i / 23 * Math.PI) * h * 0.075;
+      ctx.fillStyle = i % 2 ? "#fff" : "#e53935";
+      ctx.beginPath();
+      ctx.moveTo(fx - 9, fy);
+      ctx.lineTo(fx + 9, fy);
+      ctx.lineTo(fx, fy + 16 + Math.sin(t * 0.1 + i) * 2);
+      ctx.fill();
+    }
+    const gy = h * (h > w ? 0.74 : 0.86);
+    ctx.fillStyle = "#8bc34a";
+    ctx.fillRect(0, gy, w, h - gy);
+    ctx.fillStyle = "#689f38";
+    ctx.fillRect(0, gy, w, 5);
+    for (let i = 0; i < Math.ceil(w / 22); i++) {
+      const px = i * 22 + 11, hy = h > w ? gy + 78 : h, bob = Math.abs(Math.sin(t * 0.12 + i)) * (PN.st == "go" ? 5 : 2);
+      ctx.fillStyle = ["#ef5350", "#42a5f5", "#ffca28", "#ab47bc", "#26a69a", "#ff7043"][i % 6];
+      ctx.fillRect(px - 8, hy - 26 - bob, 16, 26);
+      ctx.fillStyle = "#ffcc80";
+      ctx.beginPath();
+      ctx.arc(px, hy - 32 - bob, 7, 0, 7);
+      ctx.fill();
+      if (i % 4 == 1) {
+        ctx.fillStyle = "#e53935";
+        ctx.fillRect(px + 6, hy - 52 - bob, 10, 5);
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(px + 6, hy - 47 - bob, 10, 5);
+      }
+    }
+    const topY = h * 0.2, botY = gy, poles = [[w * 0.33, PN.h, hero, PN.prize, 0], [w * 0.67, PN.oh, PN.oppH || "boy", PN.oprize, 1]];
+    for (const [px, hh, hk, pz, side] of poles) {
+      const pg = ctx.createLinearGradient(px - 9, 0, px + 9, 0);
+      pg.addColorStop(0, "#4e342e");
+      pg.addColorStop(0.4, "#bcaaa4");
+      pg.addColorStop(0.6, "#8d6e63");
+      pg.addColorStop(1, "#3e2723");
+      ctx.fillStyle = pg;
+      ctx.fillRect(px - 8, topY, 16, botY - topY);
+      ctx.fillStyle = "rgba(255,255,255,.45)";
+      for (let k = 0; k < 3; k++) ctx.fillRect(px - 3, topY + (t * 1.5 + k * 90) % (botY - topY), 2, 26);
+      ctx.strokeStyle = "#ffb300";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(px, topY, 52, 11, 0, 0, 7);
+      ctx.stroke();
+      const items = [pz, { k: "e", e: "🎁" }, { k: "e", e: "🎈" }, { k: "e", e: "🚩" }];
+      items.forEach((it, i) => {
+        const a = -1 + i * 0.66, ix = px + a * 46, sw2 = Math.sin(t * 0.05 + i) * 0.12;
+        ctx.save();
+        ctx.translate(ix, topY + 2);
+        ctx.rotate(sw2);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, 18);
+        ctx.stroke();
+        const big = i == 0 && !(PN.res && (side == 0 && PN.res == "win" || side == 1 && PN.res == "lose"));
+        if (i == 0 && !big) {
+        } else if (it.k == "pet" && PETS[it.id] && PETS[it.id].img.complete) {
+          const im = PETS[it.id].img, ph2 = 44, pw = ph2 * im.width / im.height;
+          ctx.drawImage(im, -pw / 2, 18, pw, ph2);
+        } else {
+          ctx.font = (i == 0 ? 32 : 20) + "px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(it.e, 0, i == 0 ? 50 : 40);
+        }
+        ctx.restore();
+      });
+      if (side == 0) {
+        ctx.font = "bold 12px Fredoka,sans-serif";
+        ctx.textAlign = "center";
+        rr(px - 34, topY - 34, 68, 18, 9, "rgba(0,0,0,.55)");
+        ctx.fillStyle = "#ffd54f";
+        ctx.fillText("🎯 Hadiahmu", px, topY - 21);
+      }
+      const cy = botY - (botY - topY - 70) * hh, arm = side ? PN.oarm : PN.arm, sc = Math.max(1.1, Math.min(2.1, h / 280));
+      ctx.save();
+      ctx.translate(px + (side ? 10 : -10) * sc, cy - 46 * sc);
+      ctx.scale(sc * (side ? -1 : 1), sc);
+      const ph = Math.sin((side ? PN.oh : PN.h) * 120);
+      heroBody(hk, BANK.eq && BANK.eq[hk] && side == 0 ? BANK.eq[hk] : "def", { sw: 0, legA: ph * 0.5, armA: -2.7 + ph * 0.35, air: false, tilt: 0.05, moving: false });
+      ctx.restore();
+      if (side) PN.oarm = Math.max(0, (PN.oarm || 0) - 0.1);
+      else PN.arm = Math.max(0, (PN.arm || 0) - 0.1);
+      ctx.font = "bold 13px Fredoka,sans-serif";
+      ctx.textAlign = "center";
+      const nm = side ? PN.oppNm || "Lawan" : "⭐ " + HN(hero);
+      const tw = ctx.measureText(nm).width + 14;
+      rr(px - tw / 2, botY + 8, tw, 20, 10, side ? "#1e88e5dd" : "#ec407add");
+      ctx.fillStyle = "#fff";
+      ctx.fillText(nm, px, botY + 22);
+      rr(px - 40, botY + 32, 80, 8, 4, "rgba(0,0,0,.3)");
+      rr(px - 40, botY + 32, 80 * hh, 8, 4, side ? "#64b5f6" : "#ffd54f");
+    }
+    PN.fx = PN.fx.filter((f) => {
+      f.t++;
+      const px = f.w ? w * 0.67 : w * 0.33, yy = gy - (gy - topY - 70) * (f.w ? PN.oh : PN.h) - 60 - f.t;
+      ctx.globalAlpha = Math.max(0, 1 - f.t / 50);
+      ctx.font = "bold 15px Fredoka,sans-serif";
+      ctx.fillStyle = "#0277bd";
+      ctx.textAlign = "center";
+      ctx.fillText(f.s, px, yy);
+      ctx.globalAlpha = 1;
+      return f.t < 50;
+    });
+  } catch (e) {
+  } finally {
+    ctx = rc;
+  }
+}
+(function() {
+  const st = document.createElement("style");
+  st.textContent = `
+#pnOv{position:fixed;inset:0;z-index:90;background:#4fc3f7;touch-action:none;-webkit-user-select:none;user-select:none}
+#pnC{position:absolute;inset:0;width:100%;height:100%}
+#pnOv .pnTop{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:center;align-items:center;gap:8px;pointer-events:none}
+#pnMsg{background:#000a;color:#fff;font:800 15px Fredoka,sans-serif;padding:6px 14px;border-radius:14px;max-width:80%;text-align:center}
+#pnX{pointer-events:auto;position:absolute;right:0;top:0;width:38px;height:38px;border-radius:50%;border:2px solid #fff;background:#0007;color:#fff;font-size:17px}
+#pnBtn{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:150px;height:96px;border-radius:26px;border:4px solid #fff;background:linear-gradient(#ff7043,#e64a19);color:#fff;font:800 30px/1 Fredoka,sans-serif;box-shadow:0 6px 0 #a63a12,0 10px 20px #0006;touch-action:none}
+#pnBtn b{display:block;font-size:20px}#pnBtn small{display:block;font-size:10px;opacity:.9;font-weight:700}#pnBtn:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #a63a12}
+#pnRes{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,340px);background:#fff;border-radius:22px;padding:16px;text-align:center;font:600 14px Fredoka,sans-serif;color:#4e342e;box-shadow:0 10px 30px #0008;display:flex;flex-direction:column;gap:6px;align-items:center}
+#pnRes.hide{display:none}.pnBig{font:800 30px Fredoka,sans-serif;color:#e65100}.pnPz{font-size:54px;line-height:1;animation:hmBob 1.4s ease-in-out infinite}.pnPz img{height:70px}
+#pnBack{border:0;border-radius:14px;background:#43a047;color:#fff;font:800 16px Fredoka,sans-serif;padding:10px 18px;margin-top:6px}
+#pnInv{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:85;background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 6px 18px #0007;font:600 13px Fredoka,sans-serif;color:#4e342e;display:flex;align-items:center;gap:8px;max-width:94vw}
+#pnInv button{border:0;border-radius:12px;background:#ff7043;color:#fff;font:800 14px Fredoka,sans-serif;padding:8px 12px;min-height:40px}#pnInvT{font-weight:800;color:#e65100}
+@keyframes hmBob{50%{transform:translateY(-6px)}}
+@media (orientation:landscape) and (max-height:420px){#pnBtn{width:130px;height:78px;font-size:24px;right:16px;left:auto;transform:none}#pnBtn:active{transform:translateY(4px)}#pnBtn b{font-size:17px}}
+`;
+  document.head.appendChild(st);
+})();
 let FWG = [], FW = null, FWf = 360, FWyH = 175, FWch = 1.5;
 const FWRW = 3, FWPD = 3.2, FWDF = 72, FWDN = 1;
 const FWNAME = { hutan: "Hutan kiri-kanan 🌳", kebun: "Kebun kiri-kanan 🌻", sungai: "Sungai kiri-kanan 🏞️", gurun: "Gurun kiri-kanan 🌵", desa: "Desa kiri-kanan 🏡", kastil: "Lorong kastil 🏰", salju: "Hutan salju ❄️", lava: "Sungai lava kiri-kanan 🌋", langit: "Jalan pelangi di awan ☁️", gua: "Lorong gua kristal 💎", dino: "Hutan purba & dinosaurus 🐉" };
@@ -8119,6 +8700,10 @@ function startLevel(n) {
   f3Place();
   qkReset();
   coinFix();
+  try {
+    pnPlace();
+  } catch (e) {
+  }
   cpX = 3 * T;
   cpList = helpers.map((h) => h.x - T).concat(signs.map((s) => s.x - T), [checkpoint]).sort((a, b) => a - b);
   spawn();
@@ -8236,6 +8821,7 @@ function update() {
     });
     return;
   }
+  if (state == "pinang") return;
   if (state == "fwd" || state == "f3d") {
     if (state == "fwd") fwUpdate();
     try {
@@ -8255,6 +8841,10 @@ function update() {
     }
     try {
       qkUpdate();
+    } catch (e) {
+    }
+    try {
+      pnCheck();
     } catch (e) {
     }
   }
@@ -16678,6 +17268,10 @@ function drawPortals2() {
   } catch (e) {
   }
   try {
+    pnDraw();
+  } catch (e) {
+  }
+  try {
     fwGateDraw();
   } catch (e) {
   }
@@ -19109,7 +19703,7 @@ function draw() {
     fwDraw();
     return;
   }
-  if (state == "f3d") return;
+  if (state == "f3d" || state == "pinang") return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const sky = ctx.createLinearGradient(0, 0, 0, 480);
   const th = THEMES[(level - 1) % THEMES.length];
@@ -19931,7 +20525,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🏁", "Lomba Panjat Pinang!", "Cari tiang pinang di setiap level! Lawan teman yang online atau komputer, panjat cepat-cepat dan ambil hadiah boneka atau peliharaanmu!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
