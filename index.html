@@ -5288,6 +5288,194 @@ function pnRender() {
 `;
   document.head.appendChild(st);
 })();
+let LGG = null;
+const LGLV = [1, 5, 10, 15, 20, 25, 30];
+function lgPlace() {
+  LGG = null;
+  try {
+    if (room || !LGLV.includes(level)) return;
+    const A1 = AREAX[1] < W ? AREAX[1] : Math.floor(W / 3);
+    const tries = [Math.floor(A1 * 0.45), Math.floor(A1 * 0.8), Math.floor(A1 * 1.3)];
+    for (const tg of tries) {
+      for (let k = 0; k < 90; k++) {
+        const x = tg + (k % 2 ? 1 : -1) * Math.ceil(k / 2);
+        if (x < 12 || x > W - 24) continue;
+        if (arena && x * T > arena.x0 - 12 * T) continue;
+        if ((FWG || []).some((g) => Math.abs(g.x - x) < 10)) continue;
+        if (F3G && Math.abs(F3G.x - x) < 10) continue;
+        if (PNG && Math.abs(PNG.x - x) < 10) continue;
+        if ((signs || []).some((s) => Math.abs(s.x / T - x - 1.5) < 4)) continue;
+        if (fwOK(x)) {
+          LGG = { x, cd: 0, t: 0 };
+          ents = ents.filter((e) => Math.abs(e.x - (x * T + 64)) > T * 5);
+          return;
+        }
+      }
+    }
+  } catch (e) {
+  }
+}
+function lgDraw() {
+  const g = LGG;
+  if (!g || room) return;
+  const x = g.x * T + 2 * T, y = 13 * T;
+  if (x + 130 < cam || x - 130 > cam + VW) return;
+  g.t++;
+  const t = g.t;
+  ctx.save();
+  ctx.globalAlpha = 0.35 + Math.sin(t * 0.07) * 0.12;
+  const gl = ctx.createRadialGradient(x, y - 70, 4, x, y - 70, 120);
+  gl.addColorStop(0, "#ffd54f");
+  gl.addColorStop(1, "rgba(255,193,7,0)");
+  ctx.fillStyle = gl;
+  ctx.beginPath();
+  ctx.arc(x, y - 70, 120, 0, 7);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#6d4c41";
+  ctx.fillRect(x - 62, y - 128, 22, 128);
+  ctx.fillRect(x + 40, y - 128, 22, 128);
+  ctx.fillStyle = "#8d6e63";
+  for (let i = 0; i < 3; i++) {
+    ctx.fillRect(x - 66 + i * 9, y - 140, 6, 12);
+    ctx.fillRect(x + 36 + i * 9, y - 140, 6, 12);
+  }
+  ctx.fillStyle = "#5d4037";
+  ctx.beginPath();
+  ctx.moveTo(x - 44, y - 118);
+  ctx.quadraticCurveTo(x, y - 168, x + 44, y - 118);
+  ctx.lineTo(x + 44, y - 108);
+  ctx.quadraticCurveTo(x, y - 152, x - 44, y - 108);
+  ctx.fill();
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x - 40, y);
+  ctx.lineTo(x - 40, y - 110);
+  ctx.quadraticCurveTo(x, y - 150, x + 40, y - 110);
+  ctx.lineTo(x + 40, y);
+  ctx.closePath();
+  ctx.clip();
+  const bg = ctx.createLinearGradient(0, y - 150, 0, y);
+  bg.addColorStop(0, "#4a148c");
+  bg.addColorStop(1, "#1a237e");
+  ctx.fillStyle = bg;
+  ctx.fillRect(x - 40, y - 150, 80, 150);
+  for (let i = 0; i < 6; i++) {
+    ctx.strokeStyle = ["#ffd54f", "#ff8a65", "#81d4fa"][i % 3];
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    const r = 8 + i * 8;
+    ctx.ellipse(x, y - 62, r, r * 1.35, t * 0.04 + i, 0.2, Math.PI * 1.5);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.font = "30px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("⚔️", x, y - 52 + Math.sin(t * 0.1) * 4);
+  ctx.restore();
+  rr(x - 96, y - 200, 192, 40, 10, "rgba(0,0,0,.7)");
+  ctx.font = "bold 13px Fredoka";
+  ctx.fillStyle = "#ffd54f";
+  ctx.textAlign = "center";
+  ctx.fillText("⚔️ Portal Legenda Kakak & Adik", x, y - 184);
+  ctx.font = "bold 10px Fredoka";
+  ctx.fillStyle = "#fff";
+  ctx.fillText("Masuk ke game RPG 3D • bisa kembali kapan saja", x, y - 169);
+  ctx.restore();
+}
+function lgCheck() {
+  const g = LGG;
+  if (!g || room || state != "play" || !P) return;
+  if (g.cd > 0) {
+    g.cd--;
+    return;
+  }
+  const cx = P.x + 12, px = g.x * T + 2 * T;
+  if (Math.abs(cx - px) < 30 && P.ground) {
+    g.cd = 240;
+    lgAsk();
+  }
+}
+function lgUrl() {
+  let base = webBase() || WEB_URL || "https://adduranil-beep.github.io/";
+  if (!/\/$/.test(base)) base = base.replace(/[^\/]*$/, "");
+  return base;
+}
+function lgAsk() {
+  if (document.getElementById("lgDlg")) return;
+  key.L = key.R = key.J = 0;
+  if (P) P.vx = 0;
+  const prev = state;
+  state = "lgask";
+  const d = document.createElement("div");
+  d.id = "lgDlg";
+  d.innerHTML = '<div class="lgBox"><div style="font-size:40px">⚔️🏰</div><b>Masuk ke Legenda Kakak &amp; Adik?</b><p>Petualangan RPG 3D bersama Sofia &amp; Ali. Permainanmu di sini <b>disimpan otomatis</b>.<br>Tekan tombol <b>⬅ Sofia &amp; Ali</b> kapan saja untuk kembali ke sini.</p><div><button class="lgGo">Masuk ⚔️</button> <button class="lgNo">Nanti saja</button></div></div>';
+  document.body.appendChild(d);
+  const close = () => {
+    d.remove();
+    if (state == "lgask") state = "play";
+    if (P) P.inv = Math.max(P.inv, 60);
+  };
+  d.querySelector(".lgNo").onclick = (e) => {
+    e.stopPropagation();
+    close();
+  };
+  d.querySelector(".lgGo").onclick = (e) => {
+    e.stopPropagation();
+    try {
+      state = "play";
+      gameSave(true);
+    } catch (err) {
+    }
+    const base = lgUrl(), url = base + "legenda/?back=" + encodeURIComponent(base + "#lanjut");
+    if (IN_CLAUDE || IS_APP || !/^https?:$/.test(location.protocol)) {
+      try {
+        window.open(url, "_blank");
+      } catch (err) {
+      }
+      close();
+      return;
+    }
+    try {
+      musStop();
+    } catch (err) {
+    }
+    location.href = url;
+  };
+  ["pointerdown", "touchstart", "mousedown"].forEach((ev) => d.addEventListener(ev, (e) => e.stopPropagation()));
+}
+setTimeout(() => {
+  try {
+    if (location.hash == "#lanjut") {
+      try {
+        history.replaceState(null, "", location.href.split("#")[0]);
+      } catch (e) {
+      }
+      if (state == "title" && gameLoad()) {
+        contGame();
+        setTimeout(() => {
+          try {
+            parts.push({ k: "banner", s: "🏡 Selamat datang kembali dari Legenda Kakak & Adik!", life: 160 });
+          } catch (e) {
+          }
+        }, 900);
+      }
+    }
+  } catch (e) {
+  }
+}, 1200);
+(function() {
+  const st = document.createElement("style");
+  st.textContent = `
+#lgDlg{position:fixed;inset:0;z-index:95;background:#0009;display:flex;align-items:center;justify-content:center}
+#lgDlg .lgBox{width:min(90vw,360px);background:linear-gradient(#fff8e1,#ffe0b2);border:4px solid #ffb300;border-radius:22px;padding:16px;text-align:center;font:600 14px Fredoka,sans-serif;color:#4e342e;box-shadow:0 10px 30px #0008}
+#lgDlg b{font-size:18px}#lgDlg p{margin:8px 0 12px;font-size:13px;line-height:1.35}#lgDlg p b{font-size:13px}
+#lgDlg button{border:0;border-radius:14px;font:800 15px Fredoka,sans-serif;padding:10px 16px;margin:3px;min-height:44px}
+#lgDlg .lgGo{background:#7b1fa2;color:#fff}#lgDlg .lgNo{background:#cfd8dc;color:#37474f}
+`;
+  document.head.appendChild(st);
+})();
 let FWG = [], FW = null, FWf = 360, FWyH = 175, FWch = 1.5;
 const FWRW = 3, FWPD = 3.2, FWDF = 72, FWDN = 1;
 const FWNAME = { hutan: "Hutan kiri-kanan 🌳", kebun: "Kebun kiri-kanan 🌻", sungai: "Sungai kiri-kanan 🏞️", gurun: "Gurun kiri-kanan 🌵", desa: "Desa kiri-kanan 🏡", kastil: "Lorong kastil 🏰", salju: "Hutan salju ❄️", lava: "Sungai lava kiri-kanan 🌋", langit: "Jalan pelangi di awan ☁️", gua: "Lorong gua kristal 💎", dino: "Hutan purba & dinosaurus 🐉" };
@@ -8704,6 +8892,10 @@ function startLevel(n) {
     pnPlace();
   } catch (e) {
   }
+  try {
+    lgPlace();
+  } catch (e) {
+  }
   cpX = 3 * T;
   cpList = helpers.map((h) => h.x - T).concat(signs.map((s) => s.x - T), [checkpoint]).sort((a, b) => a - b);
   spawn();
@@ -8845,6 +9037,10 @@ function update() {
     }
     try {
       pnCheck();
+    } catch (e) {
+    }
+    try {
+      lgCheck();
     } catch (e) {
     }
   }
@@ -17272,6 +17468,10 @@ function drawPortals2() {
   } catch (e) {
   }
   try {
+    lgDraw();
+  } catch (e) {
+  }
+  try {
     fwGateDraw();
   } catch (e) {
   }
@@ -20525,7 +20725,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["🏁", "Lomba Panjat Pinang!", "Cari tiang pinang di setiap level! Lawan teman yang online atau komputer, panjat cepat-cepat dan ambil hadiah boneka atau peliharaanmu!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["⚔️", "Portal Legenda Kakak & Adik!", "Di Level 1, 5, 10, 15, 20, 25 & 30 ada gerbang emas menuju game RPG 3D Legenda Kakak & Adik. Kembali kapan saja dengan tombol ⬅ Sofia & Ali!"], ["🏁", "Lomba Panjat Pinang!", "Cari tiang pinang di setiap level! Lawan teman yang online atau komputer, panjat cepat-cepat dan ambil hadiah boneka atau peliharaanmu!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
