@@ -366,6 +366,27 @@ body:not(.ingame) #fsBtn{display:none!important}
 .coHero{display:flex;gap:4px;justify-content:center;margin:4px 0}.coHero button{flex:1;max-width:76px;border:2px solid #fff6;border-radius:12px;background:#ffffff22;color:#fff;font:700 10px Fredoka,sans-serif;padding:3px 2px;min-height:44px}.coHero button img{display:block;width:30px;height:30px;border-radius:50%;margin:0 auto 1px}.coHero button.on{background:#ffd54f;color:#4e342e;border-color:#fff}.coHero button:disabled{opacity:.35}
 .coList{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:4px 0}.coList span{background:#ffffff26;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:700}
 #title .card.taken{filter:grayscale(1) brightness(.8)!important;opacity:.5!important}#title .card.taken::after{content:'🔒 Dipakai';position:absolute;left:0;right:0;top:40%;background:#000a;color:#fff;font:700 11px Fredoka,sans-serif;padding:3px 0}
+
+/* ===== beranda hidup ===== */
+#title .card img{display:none!important}
+#title .card .cCv{position:relative;display:block;margin:0 auto;width:min(19vw,96px);height:min(18vw,88px)}
+#title .card.on .cCv{filter:drop-shadow(0 0 6px #fff9)}
+@media (orientation:landscape) and (max-height:420px){#title .card .cCv{width:min(13vw,72px);height:min(14vh,60px)}}
+@media (max-width:300px){#title .card .cCv{width:21vw;height:19vw}}
+#title .card{animation:hmCardIn .55s cubic-bezier(.3,1.5,.6,1) backwards}
+#title .card:nth-child(2){animation-delay:.08s}#title .card:nth-child(3){animation-delay:.16s}#title .card:nth-child(4){animation-delay:.24s}
+@keyframes hmCardIn{from{opacity:0;transform:translateY(30px) scale(.6)}}
+#hmOn{cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding-left:8px!important;padding-right:8px!important}
+#hmOn img{width:20px;height:20px;border-radius:50%;border:2px solid #fff;margin-left:-6px;background:#fff}#hmOn img:first-of-type{margin-left:0}
+#hmOn b{font:700 12px Fredoka,sans-serif;white-space:nowrap}
+.hmDotG{display:inline-block;width:9px;height:9px;border-radius:50%;background:#69f0ae;box-shadow:0 0 0 0 #69f0ae;animation:hmOnP 1.6s infinite;margin-right:2px}
+@keyframes hmOnP{70%{box-shadow:0 0 0 7px #69f0ae00}100%{box-shadow:0 0 0 0 #69f0ae00}}
+.hmL2{animation:hmLogoB 4s ease-in-out infinite}
+@keyframes hmLogoB{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(1deg)}}
+@media (max-width:340px) and (orientation:portrait){#hmOn{position:fixed;top:50px;right:8px;z-index:5}}
+@media (max-width:480px){.hmOnT{display:none}#hmOn{padding-left:6px!important;padding-right:6px!important}#hmOn img{width:16px;height:16px}}
+@media (orientation:landscape) and (max-height:300px){#pskSel{width:45px!important;height:45px!important}}
+#msg .big+.big{margin-left:8px}
 </style>
 </head>
 <body>
@@ -389,17 +410,17 @@ body:not(.ingame) #fsBtn{display:none!important}
   <canvas id="tBg"></canvas>
   <div class="hmTop">
     <div id="profBar"></div>
-    <div class="hmPills"><span class="hmPill" id="tWallet"></span><button class="hmIco" id="gfxBtn" onclick="gfxToggle()" title="Grafis">🎨</button><button class="hmIco" id="fsBtn2" type="button" title="Layar penuh" aria-label="Layar penuh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="hmIco" onclick="hmModal('help')" title="Cara main">❓</button></div>
+    <div class="hmPills"><span class="hmPill" id="hmOn" onclick="hmModal('coop')"></span><span class="hmPill" id="tWallet"></span><button class="hmIco" id="gfxBtn" onclick="gfxToggle()" title="Grafis">🎨</button><button class="hmIco" id="fsBtn2" type="button" title="Layar penuh" aria-label="Layar penuh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="hmIco" onclick="hmModal('help')" title="Cara main">❓</button></div>
   </div>
   <div class="hmLogo"><div class="hmL1">PETUALANGAN SUPER</div><div class="hmL2"><span>S</span><span>o</span><span>f</span><span>i</span><span>a</span> <i>&amp;</i> <span>A</span><span>l</span><span>i</span></div><div class="hmRib">✨ BAB 2: NEGERI BADAI KACAU ✨</div></div>
   <div class="hmNews" id="hmNews"></div>
   <div class="hmStage">
     <div class="hmPick">👆 Ketuk untuk memilih pahlawan</div>
     <div class="cards">
-      <div class="card" data-hero="girl"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cGirl"><b id="nmGirl">Sofia</b><small>Kakak • Lari cepat & melayang</small><div class="cStat"><span>⚡ Lari</span><i style="--v:95%"></i><span>🐸 Lompat</span><i style="--v:70%"></i></div></div>
-      <div class="card" data-hero="boy"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cBoy"><b id="nmBoy">Ali</b><small>Adik • Lompat 2x tinggi</small><div class="cStat"><span>⚡ Lari</span><i style="--v:75%"></i><span>🐸 Lompat</span><i style="--v:98%"></i></div></div>
-      <div class="card" data-hero="abi"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cAbi"><b>Abi</b><small>Lompat super & hentak</small><div class="cStat"><span>⚡ Lari</span><i style="--v:80%"></i><span>🐸 Lompat</span><i style="--v:100%"></i></div></div>
-      <div class="card" data-hero="ummi"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cUmmi"><b>Ummi</b><small>Melayang & magnet koin</small><div class="cStat"><span>⚡ Lari</span><i style="--v:85%"></i><span>🐸 Lompat</span><i style="--v:72%"></i></div></div>
+      <div class="card" data-hero="girl"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cGirl"><canvas class="cCv" data-h="girl" width="132" height="120"></canvas><b id="nmGirl">Sofia</b><small>Kakak • Lari cepat & melayang</small><div class="cStat"><span>⚡ Lari</span><i style="--v:95%"></i><span>🐸 Lompat</span><i style="--v:70%"></i></div></div>
+      <div class="card" data-hero="boy"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cBoy"><canvas class="cCv" data-h="boy" width="132" height="120"></canvas><b id="nmBoy">Ali</b><small>Adik • Lompat 2x tinggi</small><div class="cStat"><span>⚡ Lari</span><i style="--v:75%"></i><span>🐸 Lompat</span><i style="--v:98%"></i></div></div>
+      <div class="card" data-hero="abi"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cAbi"><canvas class="cCv" data-h="abi" width="132" height="120"></canvas><b>Abi</b><small>Lompat super & hentak</small><div class="cStat"><span>⚡ Lari</span><i style="--v:80%"></i><span>🐸 Lompat</span><i style="--v:100%"></i></div></div>
+      <div class="card" data-hero="ummi"><div class="cGlow"></div><div class="cSel">✔ DIPILIH</div><img id="cUmmi"><canvas class="cCv" data-h="ummi" width="132" height="120"></canvas><b>Ummi</b><small>Melayang & magnet koin</small><div class="cStat"><span>⚡ Lari</span><i style="--v:85%"></i><span>🐸 Lompat</span><i style="--v:72%"></i></div></div>
     </div>
   </div>
   <div class="hmPlayW">
@@ -428,7 +449,7 @@ body:not(.ingame) #fsBtn{display:none!important}
 </div>
 <div id="rotMsg" style="display:none"><div class="rI">📱</div><b>Putar HP ke posisi tidur</b><small>Permainan dijeda. Miringkan HP untuk lanjut bermain!</small><button onclick="try{if(state=='play')state='shop';goHome()}catch(e){}">🏠 Kembali ke Beranda</button></div>
 <div id="shop" class="hide"><div id="shopBody"></div></div>
-<div class="screen hide" id="msg"><h1 id="msgT"></h1><p id="msgP"></p><button class="big" id="msgB">Main Lagi</button></div>
+<div class="screen hide" id="msg"><h1 id="msgT"></h1><p id="msgP"></p><button class="big" id="msgB">Main Lagi</button> <button class="big" id="msgH" style="background:#78909c">🏠 Beranda</button></div>
 
 <script>["keydown", "keyup", "keypress"].forEach((t) => addEventListener(t, (e) => {
   const g = e.target;
@@ -2656,7 +2677,7 @@ function f3Face(img, ring) {
 }
 function f3Hero() {
   const T3 = THREE, g = new T3.Group(), girl = HG(hero), sk = SK && BANK.eq && SK[BANK.eq[hero]] || {};
-  const shirt = sk.shirt && sk.shirt != "rainbow" ? sk.shirt : girl ? "#ec407a" : "#1e88e5", pants = sk.pants || (girl ? "#7b1fa2" : "#0d47a1"), skin = "#ffccbc";
+  const shirt = sk.shirt && sk.shirt != "rainbow" ? sk.shirt : { girl: "#ec407a", boy: "#1e88e5", abi: "#4a4a4a", ummi: "#f06292" }[hero] || "#1e88e5", pants = sk.pants || ({ girl: "#7b1fa2", boy: "#0d47a1", abi: "#24406e", ummi: "#f48fb1" }[hero] || "#0d47a1"), skin = "#ffccbc";
   const leg = () => {
     const p = new T3.Group(), m = new T3.Mesh(new T3.CylinderGeometry(0.11, 0.1, 0.55, 8), f3Mat(pants));
     m.position.y = -0.27;
@@ -4598,6 +4619,94 @@ body.portrait #chToast{top:190px}
 `;
   document.head.appendChild(st);
 })();
+const HMC = { t: 0, last: 0, list: null };
+function hmCards(ts) {
+  requestAnimationFrame(hmCards);
+  if (title.classList.contains("hide") || document.hidden) return;
+  if (LOWFX && ts - HMC.last < 60) return;
+  HMC.last = ts;
+  HMC.t++;
+  if (!HMC.list) HMC.list = [].slice.call(document.querySelectorAll("#title .cCv"));
+  const rc = ctx, dpr = Math.min(2, window.devicePixelRatio || 1), t = HMC.t;
+  for (const c of HMC.list) {
+    const w = c.clientWidth, h = c.clientHeight;
+    if (!w || !h) continue;
+    const W2 = Math.round(w * dpr), H2 = Math.round(h * dpr);
+    if (c.width !== W2 || c.height !== H2) {
+      c.width = W2;
+      c.height = H2;
+    }
+    const k = c.dataset.h, on = HSEL == k, taken = (CO.tk || []).includes(k), x = c.getContext("2d");
+    ctx = x;
+    try {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, W2, H2);
+      const sc = H2 / 68, ph = t * (on ? 0.22 : 0.07) + k.length, run = on && !taken, hop = run && t % 150 < 22 ? Math.sin(t % 150 / 22 * Math.PI) * 7 : 0;
+      ctx.fillStyle = "rgba(0,0,0,.18)";
+      ctx.beginPath();
+      ctx.ellipse(W2 * 0.42, H2 * 0.93, 13 * sc * (1 - hop / 30), 3 * sc, 0, 0, 7);
+      ctx.fill();
+      const pid = BANK.pet && BANK.pet[k], pd = PETS[pid];
+      if (pd && pd.img && pd.img.complete && pd.img.width) {
+        const ph2 = H2 * 0.34, pw = ph2 * pd.img.width / pd.img.height, py = H2 * 0.94 - ph2 - (pd.fly ? H2 * 0.18 + Math.sin(t * 0.1) * 3 * sc : Math.abs(Math.sin(ph * 1.1)) * (run ? 3 : 1) * sc);
+        ctx.save();
+        ctx.translate(W2 * 0.8, py);
+        ctx.scale(-1, 1);
+        ctx.drawImage(pd.img, -pw / 2, 0, pw, ph2);
+        ctx.restore();
+      }
+      ctx.setTransform(sc, 0, 0, sc, W2 * 0.42, H2 * 0.97 - 46 * sc - hop * sc);
+      const sw2 = run ? Math.sin(ph) : Math.sin(ph) * 0.15;
+      heroBody(k, BANK.eq && BANK.eq[k] || "def", { sw: sw2, legA: run ? sw2 * 0.6 : 0, armA: run ? -sw2 * 0.9 : Math.sin(ph) * 0.12 - (on && !run ? 0 : 0), air: hop > 1, tilt: run ? sw2 * 0.1 : Math.sin(ph * 0.7) * 0.06, moving: run });
+      {
+        const tl = run ? sw2 * 0.1 : Math.sin(ph * 0.7) * 0.06, big = k == "abi" || k == "ummi" ? 1.11 : 1;
+        ctx.save();
+        if (big > 1) {
+          ctx.translate(0, -5);
+          ctx.scale(big, big);
+        }
+        drawFace(face[k], 0, 4, 42, (HDEF[k] || HDEF.girl).ring, tl);
+        ctx.restore();
+      }
+      if (on && !taken && t % 40 < 20) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillStyle = "#fff59d";
+        for (let i = 0; i < 3; i++) {
+          const a = t * 0.05 + i * 2.1, rx = W2 * 0.42 + Math.cos(a) * W2 * 0.33, ry = H2 * 0.45 + Math.sin(a) * H2 * 0.3;
+          ctx.beginPath();
+          ctx.arc(rx, ry, 1.6 * dpr, 0, 7);
+          ctx.fill();
+        }
+      }
+    } catch (e) {
+    } finally {
+      ctx = rc;
+    }
+  }
+}
+requestAnimationFrame(hmCards);
+function hmOnline() {
+  const el = document.getElementById("hmOn");
+  if (!el) return;
+  let h;
+  if (CO.rm) {
+    const ps = CO.rm.peers().filter((p) => !p.sameTab && p.presence && p.presence.v == 2);
+    h = '<i class="hmDotG"></i>' + ps.slice(0, 3).map((p) => {
+      const k = p.presence.hh || p.presence.h;
+      return IMG[k] ? '<img src="' + IMG[k] + '">' : "";
+    }).join("") + "<b>" + (ps.length + 1) + '<span class="hmOnT"> online</span></b>';
+  } else h = CO.autoOff ? "<b>⚪</b>" : "<b>🔄</b>";
+  if (el._h !== h) {
+    el._h = h;
+    el.innerHTML = h;
+  }
+}
+setInterval(() => {
+  try {
+    if (!title.classList.contains("hide")) hmOnline();
+  } catch (e) {
+  }
+}, 700);
 let FWG = [], FW = null, FWf = 360, FWyH = 175, FWch = 1.5;
 const FWRW = 3, FWPD = 3.2, FWDF = 72, FWDN = 1;
 const FWNAME = { hutan: "Hutan kiri-kanan 🌳", kebun: "Kebun kiri-kanan 🌻", sungai: "Sungai kiri-kanan 🏞️", gurun: "Gurun kiri-kanan 🌵", desa: "Desa kiri-kanan 🏡", kastil: "Lorong kastil 🏰", salju: "Hutan salju ❄️", lava: "Sungai lava kiri-kanan 🌋", langit: "Jalan pelangi di awan ☁️", gua: "Lorong gua kristal 💎", dino: "Hutan purba & dinosaurus 🐉" };
@@ -5929,12 +6038,12 @@ function fwSprites(F, P0) {
 function fwHeroDraw(F) {
   const p = fwP(FWPD, F.px, 0), s = p[2], x = p[0], y = p[1], jy = F.jy * s;
   if (F.inv > 0 && tick % 8 < 4) ctx.globalAlpha = 0.45;
-  const S = SK[BANK.eq && BANK.eq[hero] || "def"] || SK.def, girl = HG(hero), k = s * 1.15 / 58, run = F.z * 1.6, air = F.jy > 0;
+  const S = SK[BANK.eq && BANK.eq[hero] || "def"] || SK.def, girl = HG(hero), HD = HDEF[hero] || HDEF.girl, k = s * 1.15 / 58 * (hero == "abi" || hero == "ummi" ? 1.1 : 1), run = F.z * 1.6, air = F.jy > 0;
   ctx.save();
   ctx.translate(x, y - jy);
   ctx.scale(k, k);
   ctx.rotate(F.vx * 1.4);
-  const shirt = solidC(S, girl ? "#fafafa" : "#ffb300"), pants = S.pants || (girl ? "#ffffff" : "#1e63d6"), leg = S.leg || (girl ? "#f5f5f5" : "#5d4037"), skin = "#f1c27d", hair = girl ? "#3e2723" : "#212121", a = air ? 0 : Math.sin(run);
+  const shirt = solidC(S, HD.sh), pants = S.pants || HD.pa, leg = S.leg || HD.lg, skin = "#f1c27d", hair = hero == "ummi" ? "#f06292" : girl ? "#3e2723" : "#212121", a = air ? 0 : Math.sin(run);
   const L1 = air ? 11 : 16 - Math.max(0, a) * 8, L2 = air ? 11 : 16 - Math.max(0, -a) * 8;
   ctx.fillStyle = skin;
   ctx.fillRect(-8, -18, 6, L1 + 1);
@@ -5950,12 +6059,13 @@ function fwHeroDraw(F) {
   ctx.ellipse(5, -18 + L2 + 1, 4.5, 3, 0, 0, 7);
   ctx.fill();
   if (girl) {
+    const ln = hero == "ummi" ? -8 : -15;
     ctx.fillStyle = pants;
     ctx.beginPath();
     ctx.moveTo(-10, -30);
     ctx.lineTo(10, -30);
-    ctx.lineTo(14, -15);
-    ctx.lineTo(-14, -15);
+    ctx.lineTo(14, ln);
+    ctx.lineTo(-14, ln);
     ctx.fill();
   } else rr(-10, -28, 20, 11, 3, pants);
   const A1 = 13 + a * 4, A2 = 13 - a * 4;
@@ -5975,7 +6085,12 @@ function fwHeroDraw(F) {
   ctx.fillStyle = skin;
   ctx.fillRect(-3, air ? 13 : A2 - 3, 6, 4);
   ctx.restore();
-  fillShirt(S.shirt ? S : { shirt: girl ? "#fafafa" : "#ffb300" }, -11, -44, 22, girl ? 16 : 18, 5);
+  fillShirt(S.shirt ? S : { shirt: HD.sh }, -11, -44, 22, girl ? 16 : 18, 5);
+  if (hero == "abi" && !S.shirt) {
+    ctx.fillStyle = "#fdd835";
+    ctx.fillRect(-11, -44, 2.5, 18);
+    ctx.fillRect(8.5, -44, 2.5, 18);
+  }
   if (S.cape) {
     ctx.fillStyle = S.cape == "rainbow" ? "#7e57c2" : S.cape;
     ctx.beginPath();
@@ -5997,7 +6112,14 @@ function fwHeroDraw(F) {
   ctx.beginPath();
   ctx.arc(0, -58, 11.5, 0, 7);
   ctx.fill();
-  if (girl) {
+  if (hero == "ummi") {
+    ctx.beginPath();
+    ctx.moveTo(-12, -58);
+    ctx.quadraticCurveTo(-15, -40, -13, -34);
+    ctx.lineTo(13, -34);
+    ctx.quadraticCurveTo(15, -40, 12, -58);
+    ctx.fill();
+  } else if (girl) {
     const sw2 = Math.sin(run * 0.5) * 3;
     ctx.beginPath();
     ctx.ellipse(sw2, -44, 5, 9, 0, 0, 7);
@@ -19652,6 +19774,20 @@ mBtn.addEventListener("pointerdown", (e) => {
 });
 mBtn.textContent = MUS.on ? "🔊" : "🔇";
 msgB.onclick = () => {
+  msg.classList.add("hide");
+  if (lives <= 0 && level) {
+    lives = 7;
+    score = 0;
+    coinN = 0;
+    title.classList.add("hide");
+    startLevel(level);
+  } else {
+    title.classList.remove("hide");
+    state = "title";
+    fillLv();
+  }
+};
+msgH.onclick = () => {
   msg.classList.add("hide");
   title.classList.remove("hide");
   state = "title";
