@@ -9842,6 +9842,9 @@ function update() {
     famTick();
   } catch (e) {
   }
+  if (needFree && cage && cage.freed && !room && G[0] && G[0][lockX] == 8) {
+    for (let y = 0; y < 13; y++) if (G[y][lockX] == 8) G[y][lockX] = 0;
+  }
   for (const h of helpers) {
     h.t += 0.05;
     if (!h.used && over(P, h)) {
@@ -13962,7 +13965,7 @@ function coopApply(r) {
     if (r.fr && M.cage && !M.cage.freed) {
       M.cage.freed = true;
       if (needFree) {
-        for (let y = 0; y < 13; y++) if (M === coopMain() && !room && G[y][lockX] == 8) G[y][lockX] = 0;
+        for (let y = 0; y < 13; y++) if (!room && G[y][lockX] == 8) G[y][lockX] = 0;
       }
       if (needFree && room && mainS) {
         for (let y = 0; y < 13; y++) if (mainS.G[y][lockX] == 8) mainS.G[y][lockX] = 0;
@@ -13985,9 +13988,9 @@ function coopApply(r) {
 }
 function coopFollowLevel(r) {
   if (!r || r.st != "play" && r.st != "win") return;
-  if (state == "play" && r.lv > level && !storyQ) {
-    parts.push({ k: "banner", s: "Teman sudah ke Level " + r.lv + "!", life: 90 });
-    startLevel(r.lv);
+  if (state == "play" && r.lv > level && !storyQ && CO.lvNote !== level + ":" + r.lv) {
+    CO.lvNote = level + ":" + r.lv;
+    parts.push({ k: "banner", s: "🏁 " + String(r.nm || "Teman").replace(/[<>&]/g, "") + " sudah lanjut ke Level " + r.lv + ". Ayo sampai ke bendera untuk menyusul!", life: 150 });
   }
 }
 let coopLvTimer = 0;
