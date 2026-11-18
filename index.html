@@ -4206,7 +4206,7 @@ function chWrap(rm) {
   if (!rm || rm._chw) return rm;
   rm._chw = 1;
   const op = rm.presence.bind(rm);
-  rm.presence = (d) => op(d && typeof d == "object" && (CH.out || typeof PN != "undefined" && PN.on) ? Object.assign({}, d, CH.out ? { ch: CH.out } : {}, typeof PN != "undefined" && PN.on ? { pn: { g: PN.g, h: +PN.h.toFixed(3), w: PN.w || 0 } } : {}) : d);
+  rm.presence = (d) => op(d && typeof d == "object" && (CH.out || typeof PN != "undefined" && PN.on) ? Object.assign({}, d, CH.out ? { ch: CH.out } : {}, typeof PN != "undefined" && PN.on && PN.g ? { pn: pnPres() } : {}) : d);
   if (rm.say !== void 0 || rm.kind == "net") rm.onSay = chOnSay;
   return rm;
 }
@@ -4265,7 +4265,7 @@ function chOnSay(o, from) {
   if (!o) return;
   if (o.t == "c") chGot(o, from);
   else if (o.t == "v") voGot(o, from);
-  else if (o.t == "pn" || o.t == "pnA") pnOnSay(o, from);
+  else if (o.t == "pn" || o.t == "pnA" || o.t == "lgo" || o.t == "lres") pnOnSay(o, from);
 }
 function chSend(txt) {
   txt = chClean(txt);
@@ -4712,7 +4712,13 @@ setInterval(() => {
   }
 }, 700);
 let PNG = null;
-const PN = { on: false, g: "", h: 0, oh: 0, w: 0, st: "", opp: null, cpu: null, t: 0, cd: 0, prize: null, res: null, taps: 0, slipT: 0, oslipT: 0, fx: [], wait: 0 };
+const PN = { on: false, g: "", game: "", st: "", line: [], me: 0, host: false, hostId: "", v: 0, w: 0, cpu: {}, res: null, t: 0, fx: [], act: {}, sent: 0 };
+const LGM = {
+  pinang: { n: "Panjat Pinang", e: "🎋", b: "⬆<b>PANJAT!</b><small>ketuk cepat-cepat</small>", tip: "Ketuk cepat untuk memanjat. Tiangnya licin!" },
+  karung: { n: "Balap Karung", e: "🏃", b: "⬆<b>LOMPAT!</b><small>ketuk saat mendarat</small>", tip: "Ketuk untuk melompat. Jangan ketuk saat masih di udara, nanti jatuh!" },
+  bola: { n: "Lempar Bola", e: "🎯", b: "🎯<b>LEMPAR!</b><small>saat jarum di hijau</small>", tip: "Lempar saat jarum di daerah hijau. Masukkan bola sebanyak-banyaknya dalam 30 detik!" },
+  tambang: { n: "Tarik Tambang", e: "💪", b: "💪<b>TARIK!</b><small>ketuk cepat-cepat</small>", tip: "Ketuk cepat bersama timmu! Tarik bendera melewati garis." }
+};
 const PNDOLL = ["🧸", "🐰", "🐻", "🦄", "🐼", "🐶"];
 function pnPlace() {
   PNG = null;
@@ -4729,7 +4735,7 @@ function pnPlace() {
         if (F3G && Math.abs(F3G.x - x) < 10) continue;
         if (typeof cage != "undefined" && cage && Math.abs(cage.x / T - x) < 8) continue;
         if (fwOK(x)) {
-          PNG = { x, used: 0, cd: 0, t: 0 };
+          PNG = { x, used: {}, cd: 0, t: 0 };
           ents = ents.filter((e) => Math.abs(e.x - (x * T + 64)) > T * 5);
           return;
         }
@@ -4742,71 +4748,70 @@ function pnDraw() {
   const g = PNG;
   if (!g || room) return;
   const x = g.x * T + 2 * T, y = 13 * T;
-  if (x + 120 < cam || x - 120 > cam + VW) return;
+  if (x + 140 < cam || x - 140 > cam + VW) return;
   g.t++;
   const t = g.t;
   ctx.save();
   ctx.fillStyle = "rgba(0,0,0,.18)";
   ctx.beginPath();
-  ctx.ellipse(x, y, 26, 6, 0, 0, 7);
+  ctx.ellipse(x, y, 70, 7, 0, 0, 7);
   ctx.fill();
-  const pg = ctx.createLinearGradient(x - 7, 0, x + 7, 0);
-  pg.addColorStop(0, "#5d4037");
-  pg.addColorStop(0.45, "#a1887f");
-  pg.addColorStop(1, "#4e342e");
-  ctx.fillStyle = pg;
-  ctx.fillRect(x - 6, y - 170, 12, 170);
-  ctx.fillStyle = "rgba(255,255,255,.35)";
-  ctx.fillRect(x - 2, y - 170 + t * 2 % 150, 2, 18);
-  ctx.strokeStyle = "#ffca28";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.ellipse(x, y - 170, 34, 8, 0, 0, 7);
-  ctx.stroke();
-  const sw2 = Math.sin(t * 0.06) * 0.15;
-  ["🎁", "🧸", g.used ? "✔" : "🎈", "🚩"].forEach((e, i) => {
-    const a = -1 + i * 0.66;
-    ctx.save();
-    ctx.translate(x + a * 30, y - 168);
-    ctx.rotate(sw2);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, 14);
-    ctx.stroke();
-    ctx.font = "15px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(e, 0, 30);
-    ctx.restore();
-  });
-  ctx.fillStyle = "#e53935";
-  ctx.fillRect(x + 1, y - 196, 18, 7);
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(x + 1, y - 189, 18, 7);
-  ctx.fillStyle = "#795548";
-  ctx.fillRect(x - 1, y - 198, 2, 28);
-  rr(x - 84, y - 226, 168, 26, 9, "rgba(0,0,0,.65)");
-  ctx.font = "bold 13px Fredoka";
-  ctx.fillStyle = g.used ? "#a5d6a7" : "#ffd54f";
-  ctx.textAlign = "center";
-  ctx.fillText(g.used ? "✔ Sudah ikut lomba!" : "🏁 Lomba Panjat Pinang!", x, y - 208);
-  if (!g.used) {
-    ctx.font = "26px sans-serif";
-    ctx.fillText("⬆", x - 46, y - 60 + Math.sin(t * 0.15) * 6);
-    ctx.fillText("⬆", x + 46, y - 60 + Math.cos(t * 0.15) * 6);
+  for (const sx of [-58, 46]) {
+    for (let k = 0; k < 8; k++) {
+      ctx.fillStyle = k % 2 ? "#fff" : "#e53935";
+      ctx.fillRect(x + sx, y - 160 + k * 20, 12, 20);
+    }
   }
+  ctx.fillStyle = "#e53935";
+  ctx.fillRect(x - 66, y - 176, 132, 18);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(x - 66, y - 158, 132, 8);
+  ctx.font = "bold 12px Fredoka";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#fff";
+  ctx.fillText("DIRGAHAYU RI", x, y - 163);
+  for (let i = 0; i < 9; i++) {
+    const fx = x - 52 + i * 13;
+    ctx.fillStyle = i % 2 ? "#fff" : "#e53935";
+    ctx.beginPath();
+    ctx.moveTo(fx - 6, y - 150);
+    ctx.lineTo(fx + 6, y - 150);
+    ctx.lineTo(fx, y - 138 + Math.sin(t * 0.1 + i) * 2);
+    ctx.fill();
+  }
+  const ic = ["🎋", "🏃", "🎯", "💪"];
+  ctx.font = "24px sans-serif";
+  for (let i = 0; i < 4; i++) {
+    const a = t * 0.03 + i * Math.PI / 2;
+    ctx.globalAlpha = 0.6 + 0.4 * Math.max(0, Math.cos(a));
+    ctx.fillText(ic[i], x + Math.sin(a) * 26, y - 70 + Math.cos(a) * 10);
+  }
+  ctx.globalAlpha = 1;
+  rr(x - 90, y - 214, 180, 30, 10, "rgba(0,0,0,.65)");
+  ctx.font = "bold 13px Fredoka";
+  ctx.fillStyle = "#ffd54f";
+  ctx.fillText("🇮🇩 Lomba 17 Agustus!", x, y - 200);
+  ctx.font = "bold 9px Fredoka";
+  ctx.fillStyle = "#fff";
+  ctx.fillText("pinang • karung • lempar bola • tambang", x, y - 189);
+  ctx.font = "26px sans-serif";
+  ctx.fillText("⬆", x, y - 24 + Math.sin(t * 0.15) * 5);
   ctx.restore();
 }
 function pnCheck() {
   const g = PNG;
-  if (!g || g.used || room || state != "play" || !P || PN.on) return;
+  if (!g || room || state != "play" || !P || PN.on) return;
   if (g.cd > 0) {
     g.cd--;
     return;
   }
   const cx = P.x + 12, px = g.x * T + 2 * T;
-  if (Math.abs(cx - px) < 30 && P.ground) pnEnter({ host: 1 });
+  if (Math.abs(cx - px) > 60) g.away = 1;
+  if (g.away !== 0 && Math.abs(cx - px) < 30 && P.ground) {
+    g.cd = 60;
+    g.away = 0;
+    pnMenu();
+  }
 }
 function pnPeers() {
   try {
@@ -4815,74 +4820,134 @@ function pnPeers() {
     return [];
   }
 }
-function pnRival(h) {
-  return { girl: "boy", boy: "girl", abi: "ummi", ummi: "abi" }[h] || "boy";
+function pnMyId() {
+  try {
+    return CO.rm && CO.rm.me || "me";
+  } catch (e) {
+    return "me";
+  }
 }
-function pnEnter(o) {
-  if (PN.on) return;
+function pnPres() {
+  const o = { g: PN.g, v: +(+PN.v || 0).toFixed(3), w: PN.w || 0 };
+  if (PN.host && PN.st != "wait") {
+    o.c = {};
+    for (const k in PN.cpu) o.c[k] = +(+PN.cpu[k].v || 0).toFixed(3);
+  }
+  return o;
+}
+function pnRival(i) {
+  const h = hero, order = [h == "girl" ? "boy" : "girl", h == "abi" ? "ummi" : "abi", h == "ummi" ? "boy" : "ummi", h == "boy" ? "girl" : "boy"];
+  return order[i % order.length];
+}
+function pnMenu() {
+  key.L = key.R = key.J = 0;
+  if (P) P.vx = 0;
+  state = "pinang";
   PN.on = true;
-  PN.g = o.gid || Math.random().toString(36).slice(2, 8);
-  PN.h = 0;
-  PN.oh = 0;
-  PN.w = 0;
-  PN.res = null;
-  PN.t = 0;
-  PN.taps = 0;
-  PN.fx = [];
-  PN.slipT = 200;
-  PN.oslipT = 240;
-  PN.cpu = null;
-  PN.opp = o.opp || null;
-  PN.oppH = o.oppH || null;
-  PN.oppNm = o.oppNm || "";
+  PN.st = "menu";
+  PN.g = "";
+  pnUI();
+  pnSetMsg("🇮🇩 Pilih lomba 17-an!");
+  const m = document.getElementById("pnMenu");
+  m.classList.remove("hide");
+  const n = pnPeers().length;
+  m.innerHTML = '<div class="pnMT">🇮🇩 Lomba 17 Agustus</div><div class="pnMS">' + (n && CO.rm && CO.rm.say ? "👥 " + n + " teman online akan diajak ikut!" : "🤖 Lawan: komputer" + (CO.rm && !CO.rm.say ? "" : " (ajak teman online untuk main bersama!)")) + "</div>" + Object.keys(LGM).map((k) => '<button data-g="' + k + '"' + (PNG && PNG.used[k] ? ' class="done" disabled' : "") + "><span>" + LGM[k].e + "</span>" + LGM[k].n + (PNG && PNG.used[k] ? "<i>✔</i>" : "") + "</button>").join("") + '<button class="pnOut">Kembali bertualang</button>';
+  m.querySelectorAll("button[data-g]").forEach((b) => b.onclick = (e) => {
+    e.stopPropagation();
+    m.classList.add("hide");
+    pnHost(b.dataset.g);
+  });
+  m.querySelector(".pnOut").onclick = (e) => {
+    e.stopPropagation();
+    pnExit();
+  };
+}
+function pnReset(game) {
+  Object.assign(PN, { game, st: "", line: [], me: 0, v: 0, w: 0, cpu: {}, res: null, t: 0, fx: [], act: {}, sent: 0, air: 0, fall: 0, slip: 200, ball: null, meter: 0, done: false });
   const pid = BANK.pet && BANK.pet[hero];
   PN.prize = PETS[pid] && Math.random() < 0.5 ? { k: "pet", id: pid } : { k: "doll", e: PNDOLL[Math.floor(Math.random() * PNDOLL.length)] };
-  PN.oprize = { k: "doll", e: PNDOLL[Math.floor(Math.random() * PNDOLL.length)] };
-  const prevState = state;
-  PN.prev = prevState;
-  state = "pinang";
-  key.L = key.R = key.J = 0;
-  try {
-    musPlay("village", 4);
-  } catch (e) {
+  const b = document.getElementById("pnBtn");
+  if (b) {
+    b.innerHTML = LGM[game].b;
+    b.style.display = "";
   }
-  pnUI();
-  if (o.host) {
-    const ps = pnPeers();
-    if (ps.length && CO.rm && CO.rm.say) {
-      PN.st = "wait";
-      PN.wait = Date.now();
-      try {
-        CO.rm.say({ t: "pn", k: "pn" + PN.g, gid: PN.g, h: hero, nm: HN(hero), lv: level });
-      } catch (e) {
-      }
-    } else pnCPU();
-  } else {
-    PN.st = "cd";
-    PN.cd = Date.now();
-  }
-  pnLoop();
+  const r = document.getElementById("pnRes");
+  if (r) r.classList.add("hide");
+  const mn = document.getElementById("pnMenu");
+  if (mn) mn.classList.add("hide");
 }
-function pnCPU() {
-  PN.opp = null;
-  PN.oppH = pnRival(hero);
-  PN.oppNm = "🤖 Komputer";
-  PN.cpu = { next: 0, rate: 2.5 + Math.min(1.4, level * 0.05) };
+function pnHost(game) {
+  pnReset(game);
+  PN.host = true;
+  PN.g = Math.random().toString(36).slice(2, 8);
+  PN.hostId = pnMyId();
+  PN.line = [{ id: PN.hostId, h: hero, nm: HN(hero) }];
+  const ps = pnPeers();
+  if (ps.length && CO.rm && CO.rm.say) {
+    PN.st = "wait";
+    PN.wait = Date.now();
+    try {
+      CO.rm.say({ t: "pn", k: "pn" + PN.g, gid: PN.g, game, h: hero, nm: HN(hero) });
+    } catch (e) {
+    }
+  } else pnStart();
+}
+function pnStart() {
+  const n = Math.max(PN.game == "tambang" ? 4 : 4, PN.line.length);
+  let ci = 0;
+  while (PN.line.length < n) {
+    const id = "cpu" + PN.line.length;
+    PN.line.push({ id, h: pnRival(ci++), nm: "🤖 Komputer", cpu: 1 });
+  }
+  if (PN.game == "tambang" && PN.line.length % 2) PN.line.push({ id: "cpu" + PN.line.length, h: pnRival(ci++), nm: "🤖 Komputer", cpu: 1 });
+  PN.line.forEach((p, i) => {
+    p.tm = i % 2;
+    if (p.cpu) PN.cpu[p.id] = { v: 0, next: 0, air: 0, fall: 0, slip: 200 + i * 40, rate: pnCpuRate() };
+  });
+  if (PN.host && CO.rm && CO.rm.say && PN.line.some((p) => !p.cpu && p.id != PN.hostId)) {
+    try {
+      CO.rm.say({ t: "lgo", k: "lgo" + PN.g, gid: PN.g, game: PN.game, line: PN.line.map((p) => ({ id: p.id, h: p.h, nm: p.nm, cpu: p.cpu ? 1 : 0, tm: p.tm })) });
+    } catch (e) {
+    }
+  }
+  pnBegin();
+}
+function pnCpuRate() {
+  return { pinang: 2.6 + Math.min(1.3, level * 0.045), karung: 2.2 + Math.min(0.5, level * 0.02), bola: 0.85 + Math.min(0.35, level * 0.012), tambang: 3 + Math.min(1.2, level * 0.04) }[PN.game];
+}
+function pnBegin() {
+  PN.me = Math.max(0, PN.line.findIndex((p) => p.id == pnMyId()));
   PN.st = "cd";
   PN.cd = Date.now();
+  const b = document.getElementById("pnBtn");
+  if (b) b.style.display = "";
 }
 function pnOnSay(o, from) {
   if (o.t == "pn") {
     if (PN.on || state != "play" || room) return;
     pnInvite(o, from);
   } else if (o.t == "pnA") {
-    if (PN.on && PN.st == "wait" && o.gid == PN.g && !PN.opp) {
-      PN.opp = from;
-      PN.oppH = o.h;
-      PN.oppNm = o.nm || HN(o.h);
-      PN.st = "cd";
-      PN.cd = Date.now();
+    if (PN.on && PN.host && PN.st == "wait" && o.gid == PN.g && !PN.line.some((p) => p.id == from) && PN.line.length < 4) {
+      PN.line.push({ id: from, h: o.h, nm: o.nm || HN(o.h) });
+      if (PN.line.length >= 4) pnStart();
     }
+  } else if (o.t == "lgo") {
+    if (PN.on && !PN.host && o.gid == PN.g && PN.st == "join") {
+      if (!o.line.some((p) => p.id == pnMyId())) {
+        pnSetMsg("Maaf, lomba sudah penuh (4 pemain)");
+        PN.st = "done";
+        setTimeout(pnExit, 1800);
+        return;
+      }
+      PN.line = o.line;
+      PN.hostId = from;
+      PN.line.forEach((p) => {
+        if (p.cpu) PN.cpu[p.id] = { v: 0 };
+      });
+      pnBegin();
+    }
+  } else if (o.t == "lres") {
+    if (PN.on && !PN.host && o.gid == PN.g && !PN.res) pnResult(o.win);
   }
 }
 function pnInvite(o, from) {
@@ -4890,7 +4955,8 @@ function pnInvite(o, from) {
   if (d) d.remove();
   d = document.createElement("div");
   d.id = "pnInv";
-  d.innerHTML = "<div>🏁 <b>" + String(o.nm || "Teman").replace(/[<>&]/g, "") + '</b> mengajak <b>Lomba Panjat Pinang!</b></div><button>Ikut Lomba!</button><span id="pnInvT">7</span>';
+  const G2 = LGM[o.game] || LGM.pinang;
+  d.innerHTML = "<div>" + G2.e + " <b>" + String(o.nm || "Teman").replace(/[<>&]/g, "") + "</b> mengajak <b>" + G2.n + '!</b></div><button>Ikut Lomba!</button><span id="pnInvT">7</span>';
   document.body.appendChild(d);
   let n = 7;
   const tm = setInterval(() => {
@@ -4911,28 +4977,92 @@ function pnInvite(o, from) {
       CO.rm.say({ t: "pnA", k: "pnA" + o.gid + Math.random(), gid: o.gid, h: hero, nm: HN(hero) });
     } catch (err) {
     }
-    pnEnter({ gid: o.gid, opp: from, oppH: o.h, oppNm: o.nm });
+    key.L = key.R = key.J = 0;
+    state = "pinang";
+    PN.on = true;
+    pnUI();
+    pnReset(o.game);
+    PN.host = false;
+    PN.g = o.gid;
+    PN.hostId = from;
+    PN.st = "join";
+    PN.joinT = Date.now();
+    pnSetMsg("⏳ Menunggu lomba dimulai…");
   };
   ["pointerdown", "touchstart", "mousedown"].forEach((ev) => d.addEventListener(ev, (e) => e.stopPropagation()));
 }
-function pnTap() {
-  if (!PN.on || PN.st != "go") return;
-  PN.taps++;
-  const top = PN.h > 0.85 ? 0.8 : 1;
-  PN.h = Math.min(1, PN.h + 0.034 * top);
-  PN.arm = 1;
-  try {
-    snd(420 + PN.h * 500, 0.05, "triangle");
-  } catch (e) {
+function pnLaneV(i) {
+  const p = PN.line[i];
+  if (!p) return 0;
+  if (i == PN.me) return PN.v;
+  if (p.cpu) {
+    const c = PN.cpu[p.id];
+    return c ? c.v : 0;
   }
-  if (PN.h >= 1 && !PN.res) pnEnd(true);
+  const q = pnPeers().find((x) => x.peer == p.id), pn = q && q.presence && q.presence.pn;
+  return pn && pn.g == PN.g ? pn.v || 0 : p._last || 0;
+}
+function pnSyncCpu() {
+  if (PN.host) return;
+  const q = pnPeers().find((x) => x.peer == PN.hostId), pn = q && q.presence && q.presence.pn;
+  if (pn && pn.g == PN.g && pn.c) {
+    for (const k in pn.c) if (PN.cpu[k]) {
+      if (pn.c[k] > PN.cpu[k].v + 4e-3) PN.act[k] = 1;
+      PN.cpu[k].v = pn.c[k];
+    }
+  }
+}
+function pnTap() {
+  if (!PN.on || PN.st != "go" || PN.res) return;
+  const g = PN.game;
+  PN.act[PN.line[PN.me].id] = 1;
+  if (g == "pinang") {
+    PN.v = Math.min(1, PN.v + 0.034 * (PN.v > 0.85 ? 0.8 : 1));
+    try {
+      snd(420 + PN.v * 500, 0.05, "triangle");
+    } catch (e) {
+    }
+  } else if (g == "karung") {
+    if (PN.fall > 0) return;
+    if (PN.air > 0) {
+      if (PN.air < 16) {
+        PN.fall = 42;
+        PN.air = 0;
+        PN.fx.push({ w: PN.me, t: 0, s: "Gedubrak! 😵" });
+        try {
+          snd(140, 0.2, "sawtooth");
+        } catch (e) {
+        }
+      }
+      return;
+    }
+    PN.air = 24;
+    try {
+      snd(500, 0.06, "square");
+    } catch (e) {
+    }
+  } else if (g == "bola") {
+    if (PN.ball) return;
+    const m = PN.meter, ok = m > 0.6 && m < 0.86;
+    PN.ball = { t: 0, ok, i: PN.me };
+    try {
+      snd(600, 0.06, "triangle");
+    } catch (e) {
+    }
+  } else if (g == "tambang") {
+    PN.v += 1;
+    try {
+      snd(300 + PN.t % 5 * 20, 0.04, "square");
+    } catch (e) {
+    }
+  }
 }
 function pnUI() {
   let ov = document.getElementById("pnOv");
   if (ov) ov.remove();
   ov = document.createElement("div");
   ov.id = "pnOv";
-  ov.innerHTML = '<canvas id="pnC"></canvas><div class="pnTop"><span id="pnMsg">🏁 Lomba Panjat Pinang</span><button id="pnX">✕</button></div><button id="pnBtn">⬆<b>PANJAT!</b><small>ketuk cepat-cepat</small></button><div id="pnRes" class="hide"></div>';
+  ov.innerHTML = '<canvas id="pnC"></canvas><div class="pnTop"><span id="pnMsg">🇮🇩 Lomba 17 Agustus</span><button id="pnX">✕</button></div><button id="pnBtn" style="display:none"></button><div id="pnMenu" class="hide"></div><div id="pnRes" class="hide"></div>';
   document.body.appendChild(ov);
   const b = ov.querySelector("#pnBtn");
   const tap = (e) => {
@@ -4945,16 +5075,16 @@ function pnUI() {
     b.addEventListener("touchstart", tap);
     b.addEventListener("mousedown", tap);
   }
-  ov.querySelector("#pnC").addEventListener(window.PointerEvent ? "pointerdown" : "touchstart", tap);
+  ov.querySelector("#pnC").addEventListener(window.PointerEvent ? "pointerdown" : "touchstart", (e) => {
+    if (PN.st == "go") tap(e);
+  });
   ov.querySelector("#pnX").onclick = (e) => {
     e.stopPropagation();
-    if (PN.st == "done") pnExit();
-    else if (confirm2()) pnEnd(false, true);
+    if (PN.st == "go" && !PN.res) pnResult(null, true);
+    else pnExit();
   };
   ["pointerdown", "touchstart", "mousedown", "click"].forEach((ev) => ov.addEventListener(ev, (e) => e.stopPropagation()));
-}
-function confirm2() {
-  return true;
+  pnLoop();
 }
 addEventListener("keydown", (e) => {
   if (!PN.on) return;
@@ -4964,21 +5094,69 @@ addEventListener("keydown", (e) => {
     if (!e.repeat) pnTap();
   }
 }, true);
-function pnEnd(win, quit) {
+function pnRank() {
+  const n = PN.line.length, vs = PN.line.map((p, i) => pnLaneV(i));
+  if (PN.game == "tambang") {
+    let L = 0, R = 0;
+    PN.line.forEach((p, i) => {
+      if (p.tm) R += vs[i];
+      else L += vs[i];
+    });
+    return { rope: (R - L) / (14 + n * 7), L, R };
+  }
+  return vs;
+}
+function pnJudge() {
+  if (PN.res || !PN.host) return;
+  const g = PN.game, el = (Date.now() - PN.go) / 1e3;
+  let win = null;
+  if (g == "tambang") {
+    const r = pnRank().rope;
+    if (r >= 1) win = [1];
+    else if (r <= -1) win = [0];
+    else if (el > 60) win = [r > 0 ? 1 : 0];
+  } else if (g == "bola") {
+    if (el >= 30) {
+      const vs = PN.line.map((p, i) => pnLaneV(i)), mx = Math.max(...vs);
+      win = vs.map((v, i) => v == mx ? i : -1).filter((i) => i >= 0);
+    }
+  } else {
+    const vs = PN.line.map((p, i2) => pnLaneV(i2));
+    const i = vs.findIndex((v) => v >= 1);
+    if (i >= 0) win = [i];
+    else if (el > 80) {
+      const mx = Math.max(...vs);
+      win = [vs.indexOf(mx)];
+    }
+  }
+  if (win) {
+    if (g == "tambang") win = PN.line.map((p, i) => p.tm == win[0] ? i : -1).filter((i) => i >= 0);
+    try {
+      if (CO.rm && CO.rm.say && PN.line.some((p) => !p.cpu && p.id != PN.hostId)) CO.rm.say({ t: "lres", k: "lres" + PN.g, gid: PN.g, win });
+    } catch (e) {
+    }
+    pnResult(win);
+  }
+}
+function pnResult(win, quit) {
   if (PN.res) return;
+  PN.st = "done";
+  const me = PN.me, iWin = !quit && win && win.includes(me);
+  PN.res = iWin ? "win" : "lose";
+  PN.w = iWin ? PN.g : 0;
+  PN.winL = win || [];
+  if (PNG) PNG.used[PN.game] = 1;
   try {
     document.getElementById("pnBtn").style.display = "none";
   } catch (e) {
   }
-  PN.res = win ? "win" : "lose";
-  PN.w = win ? PN.g : 0;
-  PN.st = "done";
   try {
     coopSend();
   } catch (e) {
   }
   let html = "";
-  if (win) {
+  const G2 = LGM[PN.game];
+  if (iWin) {
     const pz = PN.prize;
     let got = "";
     addCoin(15);
@@ -5000,12 +5178,13 @@ function pnEnd(win, quit) {
       SFX.win();
     } catch (e) {
     }
-    html = '<div class="pnBig">🏆 MENANG!</div><div>Kamu sampai puncak duluan dan mengambil hadiahnya!</div>' + got + "<div>+15 💰</div>";
+    html = '<div class="pnBig">🏆 MENANG!</div><div>' + G2.e + " " + G2.n + " — " + (PN.game == "tambang" ? "timmu menang!" : PN.game == "bola" ? "skormu paling tinggi!" : "kamu paling cepat!") + "</div>" + got + "<div>+15 💰</div>";
   } else {
     if (!quit) addCoin(3);
-    html = '<div class="pnBig">' + (quit ? "🏳️ Berhenti" : "😅 Kalah tipis!") + "</div><div>" + (quit ? "Lomba dibatalkan." : (PN.oppNm || "Lawan") + " sampai puncak duluan. Coba lagi di level berikutnya!") + "</div>" + (quit ? "" : "<div>Hadiah hiburan +3 💰</div>");
+    const wn = (win || []).map((i) => PN.line[i] && PN.line[i].nm).filter((x) => x).join(" & ");
+    html = '<div class="pnBig">' + (quit ? "🏳️ Berhenti" : "😅 Kalah tipis!") + "</div><div>" + (quit ? "Lomba dibatalkan." : "Pemenang: " + String(wn).replace(/[<>&]/g, "") + ". Coba lagi!") + "</div>" + (quit ? "" : "<div>Hadiah hiburan +3 💰</div>");
   }
-  html += '<button id="pnBack">Kembali bertualang ▶</button>';
+  html += '<div class="pnRow"><button id="pnAgain">🇮🇩 Lomba lain</button><button id="pnBack">Kembali bertualang ▶</button></div>';
   const r = document.getElementById("pnRes");
   if (r) {
     r.innerHTML = html;
@@ -5014,20 +5193,21 @@ function pnEnd(win, quit) {
       e.stopPropagation();
       pnExit();
     };
+    r.querySelector("#pnAgain").onclick = (e) => {
+      e.stopPropagation();
+      r.classList.add("hide");
+      PN.on = false;
+      pnMenu();
+    };
   }
-  setTimeout(() => {
-    if (PN.on && PN.st == "done") pnExit();
-  }, 12e3);
 }
 function pnExit() {
   if (!PN.on) return;
   PN.on = false;
+  PN.st = "";
   const ov = document.getElementById("pnOv");
   if (ov) ov.remove();
-  if (PNG) {
-    PNG.used = 1;
-    PNG.cd = 60;
-  }
+  if (PNG) PNG.cd = 90;
   state = "play";
   if (P) {
     P.inv = Math.max(P.inv, 90);
@@ -5043,6 +5223,121 @@ function pnExit() {
   } catch (e) {
   }
 }
+function pnStep() {
+  const g = PN.game, now = Date.now();
+  if (g == "pinang" && PN.v < 1) {
+    PN.v = Math.max(0, PN.v - (7e-4 + 9e-4 * PN.v));
+    if (--PN.slip <= 0) {
+      PN.slip = 220 + Math.random() * 200;
+      if (PN.v > 0.15 && Math.random() < 0.55) {
+        PN.v = Math.max(0, PN.v - 0.06);
+        PN.fx.push({ w: PN.me, t: 0, s: "Licin! 💦" });
+      }
+    }
+  }
+  if (g == "karung") {
+    if (PN.fall > 0) PN.fall--;
+    if (PN.air > 0) {
+      PN.air--;
+      if (PN.air == 0) {
+        PN.v = Math.min(1, PN.v + 0.03);
+      }
+    }
+  }
+  if (g == "bola") {
+    PN.meter = (Math.sin(now / 260) + 1) / 2;
+    if (PN.ball) {
+      PN.ball.t++;
+      if (PN.ball.t == 34) {
+        if (PN.ball.ok) {
+          PN.v++;
+          PN.fx.push({ w: PN.me, t: 0, s: "Masuk! +1" });
+          try {
+            snd(880, 0.1, "triangle");
+          } catch (e) {
+          }
+        } else PN.fx.push({ w: PN.me, t: 0, s: "Meleset!" });
+      }
+      if (PN.ball.t > 40) PN.ball = null;
+    }
+  }
+  if (PN.host) {
+    const L = PN.line;
+    for (let i = 0; i < L.length; i++) {
+      const p = L[i];
+      if (!p.cpu) continue;
+      const C = PN.cpu[p.id];
+      let rate = C.rate;
+      if (g != "tambang" && g != "bola") {
+        const mv = PN.v;
+        if (C.v > mv + 0.2) rate *= 0.75;
+        else if (mv > C.v + 0.25) rate *= 1.12;
+      }
+      if (g == "pinang") {
+        if (now >= C.next) {
+          C.next = now + 1e3 / rate * (0.7 + Math.random() * 0.6);
+          C.v = Math.min(1, C.v + 0.034 * (C.v > 0.85 ? 0.8 : 1));
+          PN.act[p.id] = 1;
+        }
+        if (C.v < 1) C.v = Math.max(0, C.v - (7e-4 + 9e-4 * C.v));
+        if (C.v < 1 && --C.slip <= 0) {
+          C.slip = 220 + Math.random() * 200;
+          if (C.v > 0.15 && Math.random() < 0.55) {
+            C.v = Math.max(0, C.v - 0.06);
+            PN.fx.push({ w: i, t: 0, s: "Licin! 💦" });
+          }
+        }
+      } else if (g == "karung") {
+        if (C.fall > 0) C.fall--;
+        else if (C.air > 0) {
+          C.air--;
+          if (C.air == 0) C.v = Math.min(1, C.v + 0.03);
+        } else if (now >= C.next) {
+          C.next = now + 1e3 / rate * (0.8 + Math.random() * 0.4);
+          if (Math.random() < 0.06) {
+            C.fall = 42;
+            PN.fx.push({ w: i, t: 0, s: "Gedubrak! 😵" });
+          } else C.air = 24;
+        }
+      } else if (g == "bola") {
+        if (now >= C.next) {
+          C.next = now + 1e3 / rate * (0.8 + Math.random() * 0.5);
+          C.ball = { t: 0, ok: Math.random() < 0.55 };
+        }
+        if (C.ball) {
+          C.ball.t++;
+          if (C.ball.t == 34 && C.ball.ok) C.v++;
+          if (C.ball.t > 40) C.ball = null;
+        }
+      } else if (g == "tambang") {
+        if (now >= C.next) {
+          C.next = now + 1e3 / rate * (0.75 + Math.random() * 0.5);
+          C.v++;
+          PN.act[p.id] = 1;
+        }
+      }
+    }
+  } else {
+    pnSyncCpu();
+    const hp = pnPeers().find((x) => x.peer == PN.hostId);
+    if (hp) PN.hostSeen = Date.now();
+    else if (Date.now() - (PN.hostSeen || PN.go) > 5e3) {
+      PN.host = true;
+      PN.line.forEach((p, i) => {
+        if (p.cpu) {
+          const o = PN.cpu[p.id] || { v: 0 };
+          PN.cpu[p.id] = Object.assign({ next: 0, air: 0, fall: 0, slip: 200, rate: pnCpuRate() }, o);
+        }
+      });
+      pnSetMsg("Tuan rumah keluar — lomba dilanjutkan");
+    }
+  }
+  if (PN.t % 4 == 0 && CO.rm) try {
+    coopSend();
+  } catch (e) {
+  }
+  pnJudge();
+}
 function pnLoop() {
   if (!PN.on) return;
   requestAnimationFrame(pnLoop);
@@ -5050,12 +5345,17 @@ function pnLoop() {
   const now = Date.now();
   if (PN.st == "wait") {
     const left = 6 - Math.floor((now - PN.wait) / 1e3);
-    pnSetMsg("🔎 Mencari lawan online… " + Math.max(0, left));
-    if (left <= 0) pnCPU();
+    pnSetMsg("🔎 Menunggu teman ikut… " + Math.max(0, left) + " (" + PN.line.length + "/4)");
+    if (left <= 0) pnStart();
+  }
+  if (PN.st == "join" && now - PN.joinT > 14e3) {
+    pnSetMsg("Lomba tidak jadi dimulai");
+    PN.st = "done";
+    setTimeout(pnExit, 1500);
   }
   if (PN.st == "cd") {
     const c = 3 - Math.floor((now - PN.cd) / 1e3);
-    pnSetMsg(c > 0 ? "Siap… " + c : "MULAI! Ketuk PANJAT!");
+    pnSetMsg(c > 0 ? LGM[PN.game].e + " Siap… " + c : "MULAI!");
     if (c <= 0) {
       PN.st = "go";
       PN.go = now;
@@ -5066,54 +5366,16 @@ function pnLoop() {
     }
   }
   if (PN.st == "go") {
-    PN.h = Math.max(0, PN.h - (7e-4 + 9e-4 * PN.h));
-    if (--PN.slipT <= 0) {
-      PN.slipT = 220 + Math.random() * 200;
-      if (PN.h > 0.15 && Math.random() < 0.55) {
-        PN.h = Math.max(0, PN.h - 0.06);
-        PN.fx.push({ w: 0, t: 0, s: "Licin! 💦" });
-      }
+    pnStep();
+    if (PN.t % 40 == 0 && !PN.res) {
+      if (PN.game == "bola") pnSetMsg("⏱ " + Math.max(0, 30 - Math.floor((now - PN.go) / 1e3)) + " detik • skor " + PN.v);
+      else if (PN.game == "tambang") {
+        const r = pnRank().rope, my = PN.line[PN.me].tm;
+        pnSetMsg((my ? r : -r) > 0 ? "💪 Timmu unggul!" : "⚡ Tarik lebih cepat!");
+      } else pnSetMsg(LGM[PN.game].tip);
     }
-    if (PN.cpu) {
-      const C = PN.cpu;
-      let rate = C.rate;
-      if (PN.oh > PN.h + 0.2) rate *= 0.75;
-      else if (PN.h > PN.oh + 0.25) rate *= 1.12;
-      if (now >= C.next) {
-        C.next = now + 1e3 / rate * (0.7 + Math.random() * 0.6);
-        PN.oh = Math.min(1, PN.oh + 0.034 * (PN.oh > 0.85 ? 0.8 : 1));
-        PN.oarm = 1;
-      }
-      PN.oh = Math.max(0, PN.oh - (7e-4 + 9e-4 * PN.oh));
-      if (--PN.oslipT <= 0) {
-        PN.oslipT = 220 + Math.random() * 200;
-        if (PN.oh > 0.15 && Math.random() < 0.55) {
-          PN.oh = Math.max(0, PN.oh - 0.06);
-          PN.fx.push({ w: 1, t: 0, s: "Licin! 💦" });
-        }
-      }
-      if (PN.oh >= 1 && !PN.res) pnEnd(false);
-    } else if (PN.opp) {
-      const p = pnPeers().find((q2) => q2.peer == PN.opp), q = p && p.presence && p.presence.pn;
-      if (q && q.g == PN.g) {
-        const nh = q.h || 0;
-        if (nh > PN.oh + 0.01) PN.oarm = 1;
-        PN.oh = nh;
-        if (q.w == PN.g && !PN.res) pnEnd(false);
-      } else if (!p && now - PN.go > 4e3) {
-        pnSetMsg("Lawan keluar — lanjut melawan komputer");
-        pnCPU();
-        PN.st = "go";
-      }
-    }
-    if (now - PN.go > 7e4 && !PN.res) pnEnd(PN.h >= PN.oh);
-    if (PN.t % 5 == 0 && CO.rm) try {
-      coopSend();
-    } catch (e) {
-    }
-    if (PN.t % 30 == 0) pnSetMsg(PN.h > PN.oh ? "💪 Kamu di depan!" : PN.oh > PN.h + 0.05 ? "⚡ Kejar! Ketuk lebih cepat!" : "🔥 Seru! Sama kuat!");
   }
-  pnRender();
+  if (PN.game && PN.st != "menu") pnRender();
 }
 function pnSetMsg(s) {
   const m = document.getElementById("pnMsg");
@@ -5121,6 +5383,16 @@ function pnSetMsg(s) {
     m._s = s;
     m.textContent = s;
   }
+}
+function pnHero(hk, skin, x, y, sc, flip, o) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(sc * (flip ? -1 : 1), sc);
+  try {
+    heroBody(hk, skin, o);
+  } catch (e) {
+  }
+  ctx.restore();
 }
 function pnRender() {
   const c = document.getElementById("pnC");
@@ -5135,7 +5407,7 @@ function pnRender() {
   ctx = x;
   try {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const t = PN.t;
+    const t = PN.t, g = PN.game, L = PN.line, n = Math.max(1, L.length), por = h > w;
     const sk = ctx.createLinearGradient(0, 0, 0, h);
     sk.addColorStop(0, "#4fc3f7");
     sk.addColorStop(1, "#e1f5fe");
@@ -5143,17 +5415,8 @@ function pnRender() {
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = "#fff59d";
     ctx.beginPath();
-    ctx.arc(w * 0.86, h * 0.12, 28, 0, 7);
+    ctx.arc(w * 0.86, h * 0.12, 26, 0, 7);
     ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,.9)";
-    [[0.15, 0.14], [0.5, 0.08], [0.72, 0.2]].forEach(([a, b], i) => {
-      const cx = (a * w + t * 0.2 * (i + 1)) % (w + 120) - 60;
-      ctx.beginPath();
-      ctx.arc(cx, b * h, 18, 0, 7);
-      ctx.arc(cx + 20, b * h - 8, 22, 0, 7);
-      ctx.arc(cx + 42, b * h, 16, 0, 7);
-      ctx.fill();
-    });
     ctx.strokeStyle = "#795548";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -5169,13 +5432,13 @@ function pnRender() {
       ctx.lineTo(fx, fy + 16 + Math.sin(t * 0.1 + i) * 2);
       ctx.fill();
     }
-    const gy = h * (h > w ? 0.74 : 0.86);
-    ctx.fillStyle = "#8bc34a";
+    const gy = h * (por ? 0.74 : 0.86);
+    ctx.fillStyle = g == "karung" ? "#9ccc65" : "#8bc34a";
     ctx.fillRect(0, gy, w, h - gy);
     ctx.fillStyle = "#689f38";
-    ctx.fillRect(0, gy, w, 5);
+    ctx.fillRect(0, gy, w, 4);
     for (let i = 0; i < Math.ceil(w / 22); i++) {
-      const px = i * 22 + 11, hy = h > w ? gy + 78 : h, bob = Math.abs(Math.sin(t * 0.12 + i)) * (PN.st == "go" ? 5 : 2);
+      const px = i * 22 + 11, hy = por ? gy + 78 : h, bob = Math.abs(Math.sin(t * 0.12 + i)) * (PN.st == "go" ? 5 : 2);
       ctx.fillStyle = ["#ef5350", "#42a5f5", "#ffca28", "#ab47bc", "#26a69a", "#ff7043"][i % 6];
       ctx.fillRect(px - 8, hy - 26 - bob, 16, 26);
       ctx.fillStyle = "#ffcc80";
@@ -5189,75 +5452,242 @@ function pnRender() {
         ctx.fillRect(px + 6, hy - 47 - bob, 10, 5);
       }
     }
-    const topY = h * 0.2, botY = gy, poles = [[w * 0.33, PN.h, hero, PN.prize, 0], [w * 0.67, PN.oh, PN.oppH || "boy", PN.oprize, 1]];
-    for (const [px, hh, hk, pz, side] of poles) {
-      const pg = ctx.createLinearGradient(px - 9, 0, px + 9, 0);
-      pg.addColorStop(0, "#4e342e");
-      pg.addColorStop(0.4, "#bcaaa4");
-      pg.addColorStop(0.6, "#8d6e63");
-      pg.addColorStop(1, "#3e2723");
-      ctx.fillStyle = pg;
-      ctx.fillRect(px - 8, topY, 16, botY - topY);
-      ctx.fillStyle = "rgba(255,255,255,.45)";
-      for (let k = 0; k < 3; k++) ctx.fillRect(px - 3, topY + (t * 1.5 + k * 90) % (botY - topY), 2, 26);
-      ctx.strokeStyle = "#ffb300";
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.ellipse(px, topY, 52, 11, 0, 0, 7);
-      ctx.stroke();
-      const items = [pz, { k: "e", e: "🎁" }, { k: "e", e: "🎈" }, { k: "e", e: "🚩" }];
-      items.forEach((it, i) => {
-        const a = -1 + i * 0.66, ix = px + a * 46, sw2 = Math.sin(t * 0.05 + i) * 0.12;
+    const sc = Math.max(0.8, Math.min(1.7, Math.min(h / 300, w / (n * 95)))), skin = (i) => i == PN.me ? BANK.eq && BANK.eq[L[i].h] || "def" : "def";
+    const label = (i, lx, ly) => {
+      const p = L[i];
+      ctx.font = "bold 11px Fredoka,sans-serif";
+      ctx.textAlign = "center";
+      const nm = (i == PN.me ? "⭐ " : "") + String(p.nm || "").slice(0, 14), tw = ctx.measureText(nm).width + 12;
+      rr(lx - tw / 2, ly, tw, 17, 8, (i == PN.me ? "#ec407a" : p.cpu ? "#607d8bcc" : (HDEF[p.h] || HDEF.girl).col) + "");
+      ctx.fillStyle = "#fff";
+      ctx.fillText(nm, lx, ly + 12);
+    };
+    const act = (id) => {
+      const a = PN.act[id] || 0;
+      if (a) PN.act[id] = Math.max(0, a - 0.12);
+      return a;
+    };
+    if (g == "pinang") {
+      const topY = h * 0.2, botY = gy;
+      for (let i = 0; i < n; i++) {
+        const px = w * (i + 0.5) / n, hh = pnLaneV(i), p = L[i];
+        const pg = ctx.createLinearGradient(px - 8, 0, px + 8, 0);
+        pg.addColorStop(0, "#4e342e");
+        pg.addColorStop(0.45, "#bcaaa4");
+        pg.addColorStop(1, "#3e2723");
+        ctx.fillStyle = pg;
+        ctx.fillRect(px - 7, topY, 14, botY - topY);
+        ctx.fillStyle = "rgba(255,255,255,.45)";
+        ctx.fillRect(px - 2, topY + (t * 1.5 + i * 60) % (botY - topY), 2, 26);
+        ctx.strokeStyle = "#ffb300";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(px, topY, Math.min(44, w / n * 0.4), 9, 0, 0, 7);
+        ctx.stroke();
+        const pz = i == PN.me ? PN.prize : { k: "e", e: ["🎁", "🧸", "🎈", "🐻"][i % 4] };
+        const gone = PN.res && PN.winL.includes(i);
         ctx.save();
-        ctx.translate(ix, topY + 2);
-        ctx.rotate(sw2);
+        ctx.translate(px, topY + 2);
+        ctx.rotate(Math.sin(t * 0.05 + i) * 0.12);
         ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(0, 18);
+        ctx.lineTo(0, 16);
         ctx.stroke();
-        const big = i == 0 && !(PN.res && (side == 0 && PN.res == "win" || side == 1 && PN.res == "lose"));
-        if (i == 0 && !big) {
-        } else if (it.k == "pet" && PETS[it.id] && PETS[it.id].img.complete) {
-          const im = PETS[it.id].img, ph2 = 44, pw = ph2 * im.width / im.height;
-          ctx.drawImage(im, -pw / 2, 18, pw, ph2);
-        } else {
-          ctx.font = (i == 0 ? 32 : 20) + "px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(it.e, 0, i == 0 ? 50 : 40);
+        if (!gone) {
+          if (pz.k == "pet" && PETS[pz.id] && PETS[pz.id].img.complete) {
+            const im = PETS[pz.id].img, ph = 40, pw = ph * im.width / im.height;
+            ctx.drawImage(im, -pw / 2, 16, pw, ph);
+          } else {
+            ctx.font = "28px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(pz.e, 0, 46);
+          }
         }
         ctx.restore();
-      });
-      if (side == 0) {
-        ctx.font = "bold 12px Fredoka,sans-serif";
-        ctx.textAlign = "center";
-        rr(px - 34, topY - 34, 68, 18, 9, "rgba(0,0,0,.55)");
-        ctx.fillStyle = "#ffd54f";
-        ctx.fillText("🎯 Hadiahmu", px, topY - 21);
+        const a = act(p.id), ph2 = Math.sin(hh * 120), cy = botY - (botY - topY - 66) * hh;
+        pnHero(p.h, skin(i), px - 9 * sc, cy - 46 * sc, sc, false, { sw: 0, legA: ph2 * 0.5, armA: -2.7 + ph2 * 0.35 + a * 0.3, tilt: 0.05 });
+        label(i, px, botY + 6);
+        rr(px - 30, botY + 26, 60, 6, 3, "rgba(0,0,0,.3)");
+        rr(px - 30, botY + 26, 60 * hh, 6, 3, i == PN.me ? "#ffd54f" : "#90caf9");
       }
-      const cy = botY - (botY - topY - 70) * hh, arm = side ? PN.oarm : PN.arm, sc = Math.max(1.1, Math.min(2.1, h / 280));
-      ctx.save();
-      ctx.translate(px + (side ? 10 : -10) * sc, cy - 46 * sc);
-      ctx.scale(sc * (side ? -1 : 1), sc);
-      const ph = Math.sin((side ? PN.oh : PN.h) * 120);
-      heroBody(hk, BANK.eq && BANK.eq[hk] && side == 0 ? BANK.eq[hk] : "def", { sw: 0, legA: ph * 0.5, armA: -2.7 + ph * 0.35, air: false, tilt: 0.05, moving: false });
-      ctx.restore();
-      if (side) PN.oarm = Math.max(0, (PN.oarm || 0) - 0.1);
-      else PN.arm = Math.max(0, (PN.arm || 0) - 0.1);
-      ctx.font = "bold 13px Fredoka,sans-serif";
-      ctx.textAlign = "center";
-      const nm = side ? PN.oppNm || "Lawan" : "⭐ " + HN(hero);
-      const tw = ctx.measureText(nm).width + 14;
-      rr(px - tw / 2, botY + 8, tw, 20, 10, side ? "#1e88e5dd" : "#ec407add");
+    } else if (g == "karung") {
+      const top = h * 0.22, bot = gy - 6, lh = (bot - top) / n, fx = w * 0.88, sx0 = w * 0.08;
       ctx.fillStyle = "#fff";
-      ctx.fillText(nm, px, botY + 22);
-      rr(px - 40, botY + 32, 80, 8, 4, "rgba(0,0,0,.3)");
-      rr(px - 40, botY + 32, 80 * hh, 8, 4, side ? "#64b5f6" : "#ffd54f");
+      for (let k = 0; k < 10; k++) {
+        ctx.fillStyle = k % 2 ? "#fff" : "#212121";
+        ctx.fillRect(fx - 3, top + k * (bot - top) / 10, 6, (bot - top) / 10);
+      }
+      ctx.font = "bold 12px Fredoka";
+      ctx.fillStyle = "#e53935";
+      ctx.textAlign = "center";
+      ctx.fillText("FINIS", fx, top - 6);
+      for (let i = 0; i < n; i++) {
+        const p = L[i], ly = top + lh * (i + 1), v = pnLaneV(i);
+        ctx.fillStyle = i % 2 ? "#c5e1a5" : "#aed581";
+        ctx.fillRect(0, ly - lh, w, lh);
+        ctx.strokeStyle = "#ffffff99";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, ly);
+        ctx.lineTo(w, ly);
+        ctx.stroke();
+        let air = 0, fall = 0;
+        if (i == PN.me) {
+          air = PN.air;
+          fall = PN.fall;
+        } else if (p.cpu && PN.host && PN.cpu[p.id]) {
+          air = PN.cpu[p.id].air || 0;
+          fall = PN.cpu[p.id].fall || 0;
+        } else {
+          const lv = p._lv || 0;
+          if (v > lv + 1e-3) p._hop = 24;
+          p._lv = v;
+          if (p._hop > 0) {
+            p._hop--;
+            air = p._hop;
+          }
+        }
+        const hop = air > 0 ? Math.sin((24 - air) / 24 * Math.PI) * lh * 0.45 : 0, px = sx0 + (fx - sx0 - 20) * v, s2 = Math.min(sc, lh / 56);
+        ctx.save();
+        ctx.translate(px, ly - 4 - hop);
+        if (fall > 0) ctx.rotate(-1.2 * Math.min(1, fall / 20));
+        pnHero(p.h, skin(i), 0, -46 * s2, s2, false, { sw: 0, legA: 0, armA: -0.4, tilt: 0 });
+        ctx.fillStyle = "#bcaaa4";
+        ctx.strokeStyle = "#6d4c41";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-14 * s2, -20 * s2);
+        ctx.quadraticCurveTo(-18 * s2, -24 * s2, -12 * s2, -26 * s2);
+        ctx.lineTo(12 * s2, -26 * s2);
+        ctx.quadraticCurveTo(18 * s2, -24 * s2, 14 * s2, -20 * s2);
+        ctx.lineTo(13 * s2, 0);
+        ctx.lineTo(-13 * s2, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#795548";
+        ctx.font = "bold " + Math.max(6, 7 * s2 | 0) + "px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("BERAS", 0, -9 * s2);
+        ctx.restore();
+        label(i, Math.max(40, Math.min(w - 40, px - 60)), ly - lh + 3);
+      }
+    } else if (g == "bola") {
+      const botY = gy;
+      for (let i = 0; i < n; i++) {
+        const p = L[i], px = w * (i + 0.5) / n, bx = px, by = h * 0.3, v = pnLaneV(i);
+        ctx.fillStyle = "#78909c";
+        ctx.fillRect(bx - 3, by, 6, botY - by);
+        ctx.fillStyle = "#8d6e63";
+        ctx.beginPath();
+        ctx.moveTo(bx - 22, by - 6);
+        ctx.lineTo(bx + 22, by - 6);
+        ctx.lineTo(bx + 16, by + 18);
+        ctx.lineTo(bx - 16, by + 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "#5d4037";
+        ctx.lineWidth = 2;
+        for (let k = -1; k <= 1; k++) {
+          ctx.beginPath();
+          ctx.moveTo(bx + k * 12, by - 6);
+          ctx.lineTo(bx + k * 9, by + 18);
+          ctx.stroke();
+        }
+        ctx.font = "bold 16px Fredoka";
+        ctx.fillStyle = "#e65100";
+        ctx.textAlign = "center";
+        ctx.fillText(String(v | 0), bx, by - 14);
+        const a = act(p.id);
+        pnHero(p.h, skin(i), px - 18 * sc, botY - 48 * sc, sc, false, { sw: 0, legA: 0, armA: -1.6 - a * 1.2, tilt: 0 });
+        let bl = i == PN.me ? PN.ball : p.cpu && PN.host && PN.cpu[p.id] ? PN.cpu[p.id].ball : null;
+        if (!bl && !(p.cpu && PN.host) && i != PN.me) {
+          const lv = p._lv || 0;
+          if (v > lv) {
+            p._bt = 0;
+            p._ok = 1;
+          }
+          p._lv = v;
+          if (p._bt != null && p._bt < 40) {
+            p._bt++;
+            bl = { t: p._bt, ok: 1 };
+          }
+        }
+        if (bl) {
+          const f = Math.min(1, bl.t / 34), sx = px - 14 * sc, sy = botY - 60 * sc, ex = bl.ok ? bx : bx + (i % 2 ? 26 : -26), ey = bl.ok ? by + 4 : by - 30, qx = sx + (ex - sx) * f, qy = sy + (ey - sy) * f - Math.sin(f * Math.PI) * h * 0.22;
+          ctx.fillStyle = "#ff7043";
+          ctx.beginPath();
+          ctx.arc(qx, qy, 7, 0, 7);
+          ctx.fill();
+          ctx.strokeStyle = "#bf360c";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+        label(i, px, botY + 6);
+      }
+      if (PN.st == "go") {
+        const mx = w * 0.5 - 80, my = por ? gy + 40 : h * 0.2;
+        rr(mx, my, 160, 14, 7, "#0006");
+        rr(mx + 160 * 0.6, my, 160 * 0.26, 14, 7, "#66bb6a");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(mx + 160 * PN.meter - 2, my - 4, 4, 22);
+      }
+    } else if (g == "tambang") {
+      const ry = gy - 28 * sc, rr2 = pnRank(), rope = Math.max(-1, Math.min(1, rr2.rope)), off = rope * w * 0.18, cxm = w / 2;
+      ctx.fillStyle = "#795548";
+      ctx.fillRect(cxm - 60, gy - 2, 120, 10);
+      ctx.fillStyle = "#8d6e6355";
+      ctx.beginPath();
+      ctx.ellipse(cxm, gy + 6, 70, 10, 0, 0, 7);
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.setLineDash([6, 6]);
+      ctx.lineWidth = 2;
+      for (const lx of [cxm - w * 0.18, cxm + w * 0.18]) {
+        ctx.beginPath();
+        ctx.moveTo(lx, h * 0.3);
+        ctx.lineTo(lx, gy);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "#d7ccc8";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.04 + off, ry);
+      ctx.lineTo(w * 0.96 + off, ry);
+      ctx.stroke();
+      ctx.strokeStyle = "#a1887f";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let k = 0; k < 60; k++) {
+        const xx = w * 0.04 + off + k * w * 0.92 / 60;
+        ctx.moveTo(xx, ry - 3);
+        ctx.lineTo(xx + 6, ry + 3);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#e53935";
+      ctx.fillRect(cxm + off - 1, ry, 3, 26);
+      ctx.fillRect(cxm + off, ry + 4, 16, 8);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(cxm + off, ry + 12, 16, 8);
+      const tl = L.map((p, i) => i).filter((i) => !L[i].tm), tr = L.map((p, i) => i).filter((i) => L[i].tm);
+      [[tl, -1], [tr, 1]].forEach(([ids, sd]) => ids.forEach((i, k) => {
+        const p = L[i], a = act(p.id), px = cxm + off + sd * (w * 0.12 + k * w * 0.11) - sd * a * 4, lean = sd * (0.25 + a * 0.2);
+        pnHero(p.h, skin(i), px + sd * 14 * sc, ry - 20 * sc, sc, sd < 0, { sw: 0, legA: 0.4 + a * 0.3, armA: -1.4, tilt: lean });
+        label(i, px, gy + 8);
+      }));
+      ctx.font = "bold 13px Fredoka";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#e53935";
+      ctx.fillText("TIM MERAH", w * 0.15, h * 0.28);
+      ctx.fillStyle = "#1565c0";
+      ctx.fillText("TIM BIRU", w * 0.85, h * 0.28);
     }
     PN.fx = PN.fx.filter((f) => {
       f.t++;
-      const px = f.w ? w * 0.67 : w * 0.33, yy = gy - (gy - topY - 70) * (f.w ? PN.oh : PN.h) - 60 - f.t;
+      const px = g == "karung" ? w * 0.5 : w * (f.w + 0.5) / n, yy = h * 0.5 - f.t;
       ctx.globalAlpha = Math.max(0, 1 - f.t / 50);
       ctx.font = "bold 15px Fredoka,sans-serif";
       ctx.fillStyle = "#0277bd";
@@ -5277,17 +5707,23 @@ function pnRender() {
 #pnOv{position:fixed;inset:0;z-index:90;background:#4fc3f7;touch-action:none;-webkit-user-select:none;user-select:none}
 #pnC{position:absolute;inset:0;width:100%;height:100%}
 #pnOv .pnTop{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:center;align-items:center;gap:8px;pointer-events:none}
-#pnMsg{background:#000a;color:#fff;font:800 15px Fredoka,sans-serif;padding:6px 14px;border-radius:14px;max-width:80%;text-align:center}
+#pnMsg{background:#000a;color:#fff;font:800 14px Fredoka,sans-serif;padding:6px 14px;border-radius:14px;max-width:80%;text-align:center}
 #pnX{pointer-events:auto;position:absolute;right:0;top:0;width:38px;height:38px;border-radius:50%;border:2px solid #fff;background:#0007;color:#fff;font-size:17px}
-#pnBtn{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:150px;height:96px;border-radius:26px;border:4px solid #fff;background:linear-gradient(#ff7043,#e64a19);color:#fff;font:800 30px/1 Fredoka,sans-serif;box-shadow:0 6px 0 #a63a12,0 10px 20px #0006;touch-action:none}
+#pnBtn{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:150px;height:96px;border-radius:26px;border:4px solid #fff;background:linear-gradient(#ff7043,#e64a19);color:#fff;font:800 28px/1 Fredoka,sans-serif;box-shadow:0 6px 0 #a63a12,0 10px 20px #0006;touch-action:none}
 #pnBtn b{display:block;font-size:20px}#pnBtn small{display:block;font-size:10px;opacity:.9;font-weight:700}#pnBtn:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #a63a12}
-#pnRes{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,340px);background:#fff;border-radius:22px;padding:16px;text-align:center;font:600 14px Fredoka,sans-serif;color:#4e342e;box-shadow:0 10px 30px #0008;display:flex;flex-direction:column;gap:6px;align-items:center}
-#pnRes.hide{display:none}.pnBig{font:800 30px Fredoka,sans-serif;color:#e65100}.pnPz{font-size:54px;line-height:1;animation:hmBob 1.4s ease-in-out infinite}.pnPz img{height:70px}
-#pnBack{border:0;border-radius:14px;background:#43a047;color:#fff;font:800 16px Fredoka,sans-serif;padding:10px 18px;margin-top:6px}
+#pnMenu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(92vw,420px);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:14px;box-shadow:0 10px 30px #0008;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:Fredoka,sans-serif}
+#pnMenu.hide,#pnRes.hide{display:none}
+#pnMenu .pnMT{grid-column:1/-1;text-align:center;font:800 20px Fredoka,sans-serif;color:#c62828}#pnMenu .pnMS{grid-column:1/-1;text-align:center;font-size:12px;color:#555}
+#pnMenu button{position:relative;border:3px solid #ffcdd2;border-radius:16px;background:linear-gradient(#fff,#ffebee);font:800 14px Fredoka,sans-serif;color:#4e342e;padding:10px 4px;min-height:76px}
+#pnMenu button span{display:block;font-size:30px}#pnMenu button.done{opacity:.75}#pnMenu button i{position:absolute;top:4px;right:8px;color:#43a047;font-style:normal}
+#pnMenu .pnOut{grid-column:1/-1;min-height:44px;background:#eceff1;border-color:#cfd8dc}
+#pnRes{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(88vw,360px);background:#fff;border-radius:22px;padding:16px;text-align:center;font:600 14px Fredoka,sans-serif;color:#4e342e;box-shadow:0 10px 30px #0008;display:flex;flex-direction:column;gap:6px;align-items:center}
+.pnBig{font:800 30px Fredoka,sans-serif;color:#e65100}.pnPz{font-size:54px;line-height:1;animation:hmBob 1.4s ease-in-out infinite}.pnPz img{height:70px}
+.pnRow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.pnRow button{border:0;border-radius:14px;color:#fff;font:800 14px Fredoka,sans-serif;padding:10px 14px;margin-top:6px}#pnBack{background:#43a047}#pnAgain{background:#e53935}
 #pnInv{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:85;background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 6px 18px #0007;font:600 13px Fredoka,sans-serif;color:#4e342e;display:flex;align-items:center;gap:8px;max-width:94vw}
 #pnInv button{border:0;border-radius:12px;background:#ff7043;color:#fff;font:800 14px Fredoka,sans-serif;padding:8px 12px;min-height:40px}#pnInvT{font-weight:800;color:#e65100}
 @keyframes hmBob{50%{transform:translateY(-6px)}}
-@media (orientation:landscape) and (max-height:420px){#pnBtn{width:130px;height:78px;font-size:24px;right:16px;left:auto;transform:none}#pnBtn:active{transform:translateY(4px)}#pnBtn b{font-size:17px}}
+@media (orientation:landscape) and (max-height:420px){#pnBtn{width:130px;height:78px;font-size:22px;right:16px;left:auto;transform:none}#pnBtn:active{transform:translateY(4px)}#pnBtn b{font-size:17px}#pnMenu{grid-template-columns:repeat(4,1fr);width:min(96vw,640px)}#pnMenu button{min-height:84px}}
 `;
   document.head.appendChild(st);
 })();
@@ -20782,7 +21218,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["⚔️", "Portal Legenda Kakak & Adik!", "Di Level 1, 5, 10, 15, 20, 25 & 30 ada gerbang emas menuju game RPG 3D Legenda Kakak & Adik. Kembali kapan saja dengan tombol ⬅ Sofia & Ali!"], ["🏁", "Lomba Panjat Pinang!", "Cari tiang pinang di setiap level! Lawan teman yang online atau komputer, panjat cepat-cepat dan ambil hadiah boneka atau peliharaanmu!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["⚔️", "Portal Legenda Kakak & Adik!", "Di Level 1, 5, 10, 15, 20, 25 & 30 ada gerbang emas menuju game RPG 3D Legenda Kakak & Adik. Kembali kapan saja dengan tombol ⬅ Sofia & Ali!"], ["🇮🇩", "Lomba 17 Agustus!", "Masuk gapura merah putih di setiap level: Panjat Pinang, Balap Karung, Lempar Bola & Tarik Tambang. Semua teman online bisa ikut bersamaan (sampai 4 pemain)!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
