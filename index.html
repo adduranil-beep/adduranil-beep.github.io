@@ -183,6 +183,21 @@ body.cutscene .ctrl,body.cutscene #pskB,body.cutscene #pskSel,body.cutscene #sw,
 .hmX{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:0;background:#e53935;color:#fff;font:800 16px sans-serif;cursor:pointer;box-shadow:0 3px 0 #8e0000}
 .hmKeys{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0}.hmKeys span{background:#fff2;border:2px solid #fff6;border-radius:12px;padding:4px 10px;font:700 13px Fredoka,sans-serif}
 #hmModal .villains{margin:6px 0}
+
+#famBtn.on{background:#43a047;border-color:#fff}
+.msBox{margin-top:12px;padding-top:10px;border-top:2px dashed #fff4;text-align:left}.msBox h3{margin:0 0 8px;font:800 18px Fredoka,sans-serif;color:#ffd54f;text-align:center}
+.msRow{display:flex;align-items:center;gap:10px;background:#fff1;border:2px solid #fff3;border-radius:14px;padding:6px 10px;margin:6px 0}.msRow>b{font-size:26px}.msRow.got{opacity:.6}
+.msT{flex:1;font:700 14px Fredoka,sans-serif}.msT i{display:block;height:8px;border-radius:6px;background:#0005;margin:4px 0 2px;overflow:hidden}.msT u{display:block;height:100%;background:linear-gradient(90deg,#66bb6a,#ffeb3b);text-decoration:none}.msT small{opacity:.8;font-size:11px}
+.msRow button{background:#ffca28;color:#3e2723;border:0;border-radius:12px;padding:7px 10px;font:800 13px Fredoka,sans-serif;animation:hmPulse 1s infinite;cursor:pointer}.msR{font:700 13px Fredoka,sans-serif;opacity:.85}
+.msHint,.msDone{text-align:center;font-size:12px;opacity:.85;margin:6px 0 0}.msDone{opacity:1;color:#ffd54f;font-weight:700}
+.fsRow{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#fff1;border:2px solid #fff3;border-radius:14px;padding:10px 12px;margin:8px 0}.fsRow b{font:800 16px Fredoka,sans-serif}.fsRow small{display:block;font-size:12px;opacity:.85;margin-top:2px}
+.fsTg{min-width:76px;padding:9px 10px;border-radius:20px;border:2px solid #fff6;background:#0005;color:#fff;font:800 13px Fredoka,sans-serif;cursor:pointer}.fsTg.on{background:#43a047;border-color:#fff}
+.fsOpt{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.fsOpt button{padding:6px 8px;border-radius:12px;border:2px solid #fff5;background:#0005;color:#fff;font:700 12px Fredoka,sans-serif;cursor:pointer}.fsOpt button.on{background:#ffca28;color:#3e2723;border-color:#fff}
+.fsBig{font:800 20px Fredoka,sans-serif;color:#ffd54f;white-space:nowrap}
+#famBrk{position:fixed;inset:0;z-index:130;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box}
+.fbBox{max-width:440px;width:100%;background:linear-gradient(#00897b,#004d40);border:4px solid #ffd54f;border-radius:22px;padding:16px;color:#fff;text-align:center;font-family:Fredoka,sans-serif;box-shadow:0 10px 30px #000a}
+.fbBox h2{margin:6px 0;color:#ffd54f;font:800 22px Fredoka,sans-serif}.fbBox p{margin:6px 0;font-size:15px}.fbI{font-size:46px;animation:hmBounce 1s ease-in-out infinite}.fbS{opacity:.8;font-size:13px!important}
+.fbB{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}.fbB button{padding:10px 16px;border-radius:16px;border:0;font:800 15px Fredoka,sans-serif;cursor:pointer;background:#ffca28;color:#3e2723}.fbB button:disabled{background:#9e9e9e;color:#eee}.fbB #fbHome{background:#fff;color:#004d40}
 .hmGiftBox{text-align:center}.hmGiftBox .gI{font-size:70px;animation:hmBounce 1s ease-in-out infinite;display:inline-block}.hmGiftBox .gD{display:flex;gap:6px;justify-content:center;margin:10px 0;flex-wrap:wrap}.hmGiftBox .gD div{width:54px;padding:6px 0;border-radius:12px;background:#fff2;border:2px solid #fff4;font:700 11px Fredoka,sans-serif}.hmGiftBox .gD .ok{background:#43a047}.hmGiftBox .gD .now{background:#ffca28;color:#3e2723;border-color:#fff;animation:hmPulse 1s infinite}
 #hmSplash{position:absolute!important;inset:0;z-index:9!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(circle at 50% 40%,#5e35b1,#1b1340 70%);transition:opacity .5s}
 #hmSplash.go{opacity:0;pointer-events:none}
@@ -412,7 +427,7 @@ body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::a
   <canvas id="tBg"></canvas>
   <div class="hmTop">
     <div id="profBar"></div>
-    <div class="hmPills"><span class="hmPill" id="hmOn" onclick="hmModal('coop')"></span><span class="hmPill" id="tWallet"></span><button class="hmIco" id="gfxBtn" onclick="gfxToggle()" title="Grafis">🎨</button><button class="hmIco" id="fsBtn2" type="button" title="Layar penuh" aria-label="Layar penuh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="hmIco" onclick="hmModal('help')" title="Cara main">❓</button></div>
+    <div class="hmPills"><span class="hmPill" id="hmOn" onclick="hmModal('coop')"></span><span class="hmPill" id="tWallet"></span><button class="hmIco" id="gfxBtn" onclick="gfxToggle()" title="Grafis">🎨</button><button class="hmIco" id="fsBtn2" type="button" title="Layar penuh" aria-label="Layar penuh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="hmIco" id="famBtn" onclick="hmModal('set')" title="Pengaturan keluarga">⚙️</button><button class="hmIco" onclick="hmModal('help')" title="Cara main">❓</button></div>
   </div>
   <div class="hmLogo"><div class="hmL1">PETUALANGAN SUPER</div><div class="hmL2"><span>S</span><span>o</span><span>f</span><span>i</span><span>a</span> <i>&amp;</i> <span>A</span><span>l</span><span>i</span></div><div class="hmRib">✨ BAB 2: NEGERI BADAI KACAU ✨</div></div>
   <div class="hmNews" id="hmNews"></div>
@@ -432,7 +447,7 @@ body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::a
   <div class="hmNav">
     <button onclick="openShop(false)"><b>🛍️</b>Toko</button>
     <button onclick="openShop(false)"><b>🐾</b>Peliharaan</button>
-    <button onclick="hmDaily()" id="hmDailyB"><b>🎁</b>Hadiah<i id="hmDot"></i></button>
+    <button onclick="hmDaily()" id="hmDailyB"><b>🎁</b>Hadiah & Misi<i id="hmDot"></i></button>
     <button onclick="albumMenu()"><b>📽️</b>Album</button>
     <button onclick="hmModal('coop')"><b>👥</b>Bersama</button>
     <button onclick="hmModal('help')"><b>📖</b>Cara Main</button>
@@ -445,7 +460,7 @@ body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::a
       <div class="villains helpers"><span>Penolong:</span><img id="cOldman"><span>Kakek<br><small>beri perisai</small></span><img id="cOldwoman"><span>Nenek<br><small>beri nyawa</small></span></div>
       <p style="font-size:12px;opacity:.8">Keyboard: ← → jalan, Spasi / ↑ lompat, E skill.</p></div>
     <div id="hmCoop"><h2>👨‍👩‍👧‍👦 Main Bersama</h2><div id="coopBox"></div></div>
-    <div id="hmGift"></div>
+    <div id="hmGift"></div><div id="hmSet"></div>
   </div></div>
   <div id="hmSplash"><div class="hmLogo"><div class="hmL1">PETUALANGAN SUPER</div><div class="hmL2"><span>S</span><span>o</span><span>f</span><span>i</span><span>a</span> <i>&amp;</i> <span>A</span><span>l</span><span>i</span></div></div><div class="hmBar"><i></i></div><small id="hmTip">Memuat dunia petualangan...</small></div>
 </div>
@@ -9468,6 +9483,7 @@ function dust(x, y, n) {
 function hurt() {
   if (P.inv > 0 || P.shield > 0 || state != "play") return;
   if (petGuard()) return;
+  if (famSoftHit()) return;
   lives--;
   SFX.hurt();
   state = "dying";
@@ -9553,6 +9569,10 @@ function update() {
     P.vy += 0.5;
     P.y += P.vy;
     if (--deathT <= 0) {
+      if (lives <= 0 && FAM.easy) {
+        lives = 3;
+        parts.push({ k: "txt", s: "🧸 Mode Mudah: nyawa diisi lagi!", x: P.x, y: P.y - 40, life: 90 });
+      }
       if (lives <= 0) {
         musPlay("title");
         return showMsg("Permainan Selesai", "Skor kamu: " + score + ". Ayo coba lagi!");
@@ -9702,6 +9722,10 @@ function update() {
   if (Math.abs(P.vx) > 0.3 && P.ground) P.run += Math.abs(P.vx) * 0.08;
   if (P.inv > 0) P.inv--;
   if (P.shield > 0) P.shield--;
+  try {
+    famTick();
+  } catch (e) {
+  }
   for (const h of helpers) {
     h.t += 0.05;
     if (!h.used && over(P, h)) {
@@ -9722,6 +9746,7 @@ function update() {
       parts.push({ k: "txt", s: "Wuuush! Mendarat di daratan", x: P.x, y: 6 * T, life: 80 });
       return;
     }
+    if (famRescue()) return;
     P.inv = 0;
     P.shield = 0;
     hurt();
@@ -10073,6 +10098,10 @@ function update() {
   if (P.x + P.w > flagX && G[0][arena.gate] != 7) {
     state = "win";
     winT = 150;
+    try {
+      msAdd("lvl");
+    } catch (e) {
+    }
     score += 1e3;
     musStop();
     SFX.win();
@@ -21259,7 +21288,7 @@ try {
   gfxBtn.textContent = GFX.hi ? "🎨" : "⬜";
 } catch (e) {
 }
-const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["⚔️", "Portal Legenda Kakak & Adik!", "Di Level 1, 5, 10, 15, 20, 25 & 30 ada gerbang emas menuju game RPG 3D Legenda Kakak & Adik. Kembali kapan saja dengan tombol ⬅ Sofia & Ali!"], ["🇮🇩", "Lomba 17 Agustus!", "Masuk gapura merah putih di setiap level: Panjat Pinang, Balap Karung, Lempar Bola & Tarik Tambang. Semua teman online bisa ikut bersamaan (sampai 4 pemain)!"], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
+const HMNEWS = [["🆕", "BAB 2 TELAH TIBA!", "10 negeri baru: Gua Gelap, Bulan, Kota Jam & Benteng Badai!"], ["🚪", "Rintangan Baru", "Injak saklar untuk membuka gerbang, awas duri & batu jatuh!"], ["⚔️", "Portal Legenda Kakak & Adik!", "Di Level 1, 5, 10, 15, 20, 25 & 30 ada gerbang emas menuju game RPG 3D Legenda Kakak & Adik. Kembali kapan saja dengan tombol ⬅ Sofia & Ali!"], ["🇮🇩", "Lomba 17 Agustus!", "Masuk gapura merah putih di setiap level: Panjat Pinang, Balap Karung, Lempar Bola & Tarik Tambang. Semua teman online bisa ikut bersamaan (sampai 4 pemain)!"], ["🎯", "Misi Harian Baru!", "Setiap hari ada 3 misi seru. Selesaikan semuanya untuk bonus 💎! Ada misi main bersama keluarga juga."], ["🧸", "Mode Mudah untuk Si Kecil", "Tekan ⚙️: jatuh ke jurang diselamatkan gelembung, ada hati cadangan & tanpa Game Over. Ada juga pengingat istirahat untuk Ayah & Bunda."], ["🌐", "Langsung Main Bersama!", "Setiap pemain yang online otomatis masuk room yang sama. Pilih pahlawan yang belum dipakai, lalu tekan MAIN!"], ["👨‍👩‍👧‍👦", "Abi & Ummi Ikut Bertualang!", "Pilih Abi (lompat super + hentak bumi) atau Ummi (melayang + magnet koin). Main bersama sekarang bisa sampai 4 HP!"], ["💬", "Ngobrol Saat Main Berdua!", "Kirim pesan cepat atau ketik chat, dan tahan tombol 🎙️ untuk bicara langsung ke temanmu!"], ["🌋", "Awas Gempa!", "Gempa datang tiba-tiba! Tanah terbelah — jatuh? Panjat naik dari Jurang Gempa!"], ["🗺️", "Petualangan Lebih Panjang!", "Semua level kini lebih jauh, lebih banyak musuh & rintangan, dan checkpoint tambahan!"], ["👹", "Lorong Rahasia 3D!", "Di level 1, 5, 9, 13... ada portal duel 3D melawan monster raksasa!"], ["🐪", "Si Unta Datang!", "Peliharaan baru: Si Unta dengan 10 evolusi & 11 skill gurun!"], ["🐾", "Evolusi 10x", "Si Topeng & Si Moo kini punya 10 evolusi & 12 skill baru!"], ["🎁", "Hadiah Harian", "Masuk setiap hari, kumpulkan koin & permata!"], ["👥", "Main Berdua", "Ajak saudara main bersama dari HP lain!"]];
 let hmNi = 0, hmT0 = 0, HMBG = null;
 function hmNews() {
   const n = HMNEWS[hmNi % HMNEWS.length];
@@ -21274,8 +21303,12 @@ function hmModal(k) {
     return;
   }
   m.classList.remove("hide");
-  ["hmHelp", "hmCoop", "hmGift"].forEach((id) => document.getElementById(id).style.display = "none");
-  document.getElementById(k == "help" ? "hmHelp" : k == "coop" ? "hmCoop" : "hmGift").style.display = "";
+  ["hmHelp", "hmCoop", "hmGift", "hmSet"].forEach((id) => document.getElementById(id).style.display = "none");
+  document.getElementById(k == "help" ? "hmHelp" : k == "coop" ? "hmCoop" : k == "set" ? "hmSet" : "hmGift").style.display = "";
+  if (k == "set") try {
+    famSetUI();
+  } catch (e) {
+  }
   if (k == "coop") try {
     coopUI();
   } catch (e) {
@@ -21305,6 +21338,10 @@ function hmDaily() {
   let h = '<div class="hmGiftBox"><h2>🎁 Hadiah Harian</h2><div class="gI">🎁</div><div class="gD">' + HMGIFT.map((g, i) => '<div class="' + (i < day || !can && i == day ? "ok" : i == day && can ? "now" : "") + '">Hari ' + (i + 1) + "<br>💰" + g[0] + (g[1] ? "<br>💎" + g[1] : "") + "</div>").join("") + "</div>";
   h += can ? '<button class="big" onclick="hmClaim()">Ambil Hadiah!</button>' : "<p>✅ Hadiah hari ini sudah diambil. Kembali besok ya!</p>";
   h += "</div>";
+  try {
+    h += msHtml();
+  } catch (e) {
+  }
   document.getElementById("hmGift").innerHTML = h;
   hmModal("gift");
 }
@@ -21554,6 +21591,350 @@ addEventListener("contextmenu", (e) => e.preventDefault());
 addEventListener("blur", () => {
   key.L = key.R = key.J = 0;
 });
+const FAM = { easy: false, brk: 30, pt: 0, cf: 0, dmF: 0, hid: 0 };
+try {
+  const o = JSON.parse(localStorage.kkadFam || "{}");
+  FAM.easy = !!o.easy;
+  FAM.brk = o.brk == null ? 30 : +o.brk;
+} catch (e) {
+}
+function famSave() {
+  try {
+    localStorage.kkadFam = JSON.stringify({ easy: FAM.easy, brk: FAM.brk });
+  } catch (e) {
+  }
+}
+let SAFE = null;
+function famDayMin() {
+  try {
+    const o = JSON.parse(localStorage.kkadPlayT || "{}");
+    return o.d == hmDayKey() ? o.m || 0 : 0;
+  } catch (e) {
+    return 0;
+  }
+}
+function famAddMin() {
+  try {
+    const k = hmDayKey();
+    const o = JSON.parse(localStorage.kkadPlayT || "{}");
+    localStorage.kkadPlayT = JSON.stringify({ d: k, m: (o.d == k ? o.m || 0 : 0) + 1 });
+  } catch (e) {
+  }
+}
+function famTick() {
+  if (state != "play" || !P) return;
+  if (P.ground && !P.onMP && P.vy >= 0) {
+    const ty = Math.floor((P.y + P.h + 2) / T), a = Math.floor((P.x + 3) / T), b = Math.floor((P.x + P.w - 3) / T);
+    if (G[ty] && solid(G[ty][a]) && solid(G[ty][b]) && G[ty][a] != 35 && G[ty][b] != 35) SAFE = { x: P.x, y: P.y, rm: room || "", lv: level };
+  }
+  FAM.pt++;
+  FAM.dmF++;
+  if (FAM.dmF >= 3600) {
+    FAM.dmF = 0;
+    famAddMin();
+  }
+  if (FAM.brk > 0 && FAM.pt >= FAM.brk * 3600) famBreak();
+  if (typeof CO != "undefined" && CO.peers && Object.keys(CO.peers).length) {
+    if (++FAM.cf >= 3600) {
+      FAM.cf = 0;
+      msAdd("coop");
+    }
+  }
+}
+function famGround(px, py) {
+  const tx = Math.floor((px + 12) / T);
+  let best = null;
+  for (let d = 0; d < 50 && !best; d++) for (const sx of d ? [tx - d, tx + d] : [tx]) {
+    if (sx < 1 || sx >= W - 1) continue;
+    for (let y = 3; y < H; y++) {
+      const t = G[y] && G[y][sx], u = G[y - 1] && G[y - 1][sx], v = G[y - 2] && G[y - 2][sx];
+      if (solid(t) && t != 35 && !solid(u) && u != 35 && !solid(v)) {
+        const c = { x: sx * T + 4, y: y * T - 46 };
+        if (!best || Math.abs(c.y - py) < Math.abs(best.y - py)) best = c;
+      }
+    }
+    if (best) break;
+  }
+  return best;
+}
+function famRescue() {
+  if (!FAM.easy || !P) return false;
+  const s = SAFE && SAFE.lv == level && SAFE.rm == (room || "") ? SAFE : { x: cpX, y: 9 * T };
+  const g = famGround(s.x, s.y);
+  if (!g) return false;
+  P.x = g.x;
+  P.y = g.y;
+  P.vx = 0;
+  P.vy = 0;
+  P.inv = Math.max(P.inv || 0, 120);
+  parts.push({ k: "txt", s: "🫧 Gelembung penyelamat!", x: P.x + 12, y: P.y - 30, life: 80 });
+  for (let i = 0; i < 14; i++) parts.push({ k: "dust", c: i % 2 ? "#b3e5fc" : "#ffffff", x: P.x + 12 + (Math.random() - 0.5) * 40, y: P.y + 20 + (Math.random() - 0.5) * 40, vx: (Math.random() - 0.5) * 3, vy: -Math.random() * 3, life: 34, r: 4 + Math.random() * 4 });
+  try {
+    [660, 880, 990].forEach((f, i) => setTimeout(() => snd(f, 0.12, "sine"), i * 70));
+  } catch (e) {
+  }
+  return true;
+}
+function famSoftHit() {
+  if (!FAM.easy) return false;
+  if (tick - (P.eh || -1e4) < 600) return false;
+  P.eh = tick;
+  P.inv = 100;
+  P.vy = -7;
+  try {
+    SFX.hurt();
+  } catch (e) {
+  }
+  parts.push({ k: "txt", s: "💛 Hati cadangan melindungimu!", x: P.x + 12, y: P.y - 30, life: 80 });
+  return true;
+}
+function famBreak() {
+  if (state != "play") return;
+  FAM.pt = 0;
+  state = "shop";
+  key.L = key.R = key.J = 0;
+  document.querySelectorAll(".btn").forEach((b) => b.classList.remove("on"));
+  let d = document.getElementById("famBrk");
+  if (d) d.remove();
+  d = document.createElement("div");
+  d.id = "famBrk";
+  const mins = famDayMin();
+  d.innerHTML = '<div class="fbBox"><div class="fbI">🧃🙆‍♀️👀</div><h2>Waktunya istirahat sebentar!</h2><p>Kamu sudah bermain ' + FAM.brk + ' menit. Ayo minum air, regangkan badan, dan istirahatkan mata sejenak ya!</p><p class="fbS">Hari ini sudah main ±' + mins + ' menit</p><div class="fbB"><button id="fbGo" disabled>▶ Lanjut (<span id="fbN">30</span>)</button><button id="fbHome">🏠 Selesai dulu</button></div></div>';
+  document.body.appendChild(d);
+  ["pointerdown", "touchstart", "mousedown"].forEach((ev) => d.addEventListener(ev, (e) => e.stopPropagation()));
+  let n = 30;
+  const tm = setInterval(() => {
+    n--;
+    const s = document.getElementById("fbN");
+    if (s) s.textContent = n;
+    if (n <= 0) {
+      clearInterval(tm);
+      const b = document.getElementById("fbGo");
+      if (b) {
+        b.disabled = false;
+        b.textContent = "▶ Lanjut main";
+      }
+    }
+  }, 1e3);
+  d.querySelector("#fbGo").onclick = () => {
+    clearInterval(tm);
+    d.remove();
+    if (state == "shop") state = "play";
+    if (P) P.inv = Math.max(P.inv || 0, 60);
+  };
+  d.querySelector("#fbHome").onclick = () => {
+    clearInterval(tm);
+    d.remove();
+    try {
+      goHome();
+    } catch (e) {
+    }
+  };
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) FAM.hid = Date.now();
+  else if (FAM.hid && Date.now() - FAM.hid > 5 * 6e4) {
+    FAM.pt = 0;
+  }
+});
+function famSetUI() {
+  const e = document.getElementById("hmSet");
+  if (!e) return;
+  const mins = famDayMin();
+  e.innerHTML = '<h2>⚙️ Pengaturan Keluarga</h2><div class="fsRow"><div><b>🧸 Mode Mudah</b><small>Untuk si kecil: jatuh ke jurang diselamatkan gelembung, ada hati cadangan, dan tidak ada "Permainan Selesai".</small></div><button id="fsEasy" class="fsTg' + (FAM.easy ? " on" : "") + '">' + (FAM.easy ? "NYALA" : "MATI") + '</button></div><div class="fsRow"><div><b>⏰ Pengingat istirahat</b><small>Game berhenti sejenak dan mengajak anak istirahat setelah waktu ini.</small></div><div class="fsOpt">' + [0, 20, 30, 45, 60].map((m) => '<button data-m="' + m + '" class="' + (FAM.brk == m ? "on" : "") + '">' + (m ? m + "m" : "Mati") + "</button>").join("") + '</div></div><div class="fsRow"><div><b>📊 Waktu main hari ini</b><small>Di HP ini, semua profil.</small></div><span class="fsBig">' + mins + " menit</span></div>";
+  e.querySelector("#fsEasy").onclick = () => {
+    FAM.easy = !FAM.easy;
+    famSave();
+    famSetUI();
+    famBadge();
+  };
+  e.querySelectorAll(".fsOpt button").forEach((b) => b.onclick = () => {
+    FAM.brk = +b.dataset.m;
+    famSave();
+    famSetUI();
+  });
+}
+function famBadge() {
+  const b = document.getElementById("famBtn");
+  if (b) {
+    b.classList.toggle("on", FAM.easy);
+    b.title = FAM.easy ? "Pengaturan keluarga (Mode Mudah NYALA)" : "Pengaturan keluarga";
+  }
+}
+const MSP = [
+  { id: "coin", k: "coinsTot", n: 60, e: "💰", t: "Kumpulkan 60 koin", r: 40 },
+  { id: "stomp", k: "stomp", n: 8, e: "👟", t: "Injak 8 monster", r: 50 },
+  { id: "jump", k: "jumps", n: 60, e: "🐸", t: "Lompat 60 kali", r: 30 },
+  { id: "lvl", k: "lvl", n: 2, e: "🏁", t: "Selesaikan 2 level", r: 60 },
+  { id: "lomba", k: "lomba", n: 1, e: "🇮🇩", t: "Ikut 1 Lomba 17 Agustus", r: 40 },
+  { id: "skill", k: "petSkill", n: 4, e: "🐾", t: "Pakai skill peliharaan 4 kali", r: 40 },
+  { id: "coop", k: "coop", n: 5, e: "👨‍👩‍👧‍👦", t: "Main bersama keluarga/teman 5 menit", r: 70 }
+];
+function msState() {
+  let o = {};
+  try {
+    o = JSON.parse(localStorage[PK("kkadMis")] || "{}");
+  } catch (e) {
+  }
+  const d = hmDayKey();
+  if (o.d != d) {
+    let h = 0;
+    for (const c of d) h = h * 31 + c.charCodeAt(0) >>> 0;
+    const pool = MSP.map((m) => m.id);
+    const ids = [];
+    while (ids.length < 3) {
+      h = h * 1103515245 + 12345 >>> 0;
+      const j = h % pool.length;
+      ids.push(pool.splice(j, 1)[0]);
+    }
+    if (!ids.includes("coop")) ids[2] = "coop";
+    o = { d, ids, p: {}, c: {}, b: 0 };
+    try {
+      localStorage[PK("kkadMis")] = JSON.stringify(o);
+    } catch (e) {
+    }
+  }
+  return o;
+}
+function msSave(o) {
+  try {
+    localStorage[PK("kkadMis")] = JSON.stringify(o);
+  } catch (e) {
+  }
+}
+function msAdd(k, v) {
+  try {
+    const o = msState();
+    let ch = 0;
+    for (const id of o.ids) {
+      const m = MSP.find((x) => x.id == id);
+      if (!m || m.k != k) continue;
+      const was = o.p[id] || 0;
+      if (was >= m.n) continue;
+      o.p[id] = Math.min(m.n, was + (v == null ? 1 : v));
+      ch = 1;
+      if (o.p[id] >= m.n && typeof P != "undefined" && P && state != "title") {
+        parts.push({ k: "txt", s: "✅ Misi harian selesai: " + m.t + "!", x: P.x + 12, y: P.y - 50, life: 110 });
+        try {
+          SFX.win();
+        } catch (e) {
+        }
+      }
+    }
+    if (ch) {
+      msSave(o);
+      try {
+        hmDot();
+      } catch (e) {
+      }
+    }
+  } catch (e) {
+  }
+}
+function msClaimable() {
+  const o = msState();
+  return o.ids.some((id) => {
+    const m = MSP.find((x) => x.id == id);
+    return m && (o.p[id] || 0) >= m.n && !o.c[id];
+  }) || !o.b && o.ids.every((id) => o.c[id]);
+}
+function msClaim(id) {
+  const o = msState();
+  const m = MSP.find((x) => x.id == id);
+  if (!m || o.c[id] || (o.p[id] || 0) < m.n) return;
+  o.c[id] = 1;
+  BANK.c += m.r;
+  msSave(o);
+  try {
+    bankSave();
+  } catch (e) {
+  }
+  try {
+    snd(880, 0.15, "triangle");
+  } catch (e) {
+  }
+  hmDaily();
+  try {
+    fillLv();
+  } catch (e) {
+  }
+}
+function msBonus() {
+  const o = msState();
+  if (o.b || !o.ids.every((id) => o.c[id])) return;
+  o.b = 1;
+  BANK.g += 2;
+  msSave(o);
+  try {
+    bankSave();
+  } catch (e) {
+  }
+  try {
+    [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => snd(f, 0.15, "triangle"), i * 90));
+  } catch (e) {
+  }
+  hmDaily();
+  try {
+    fillLv();
+  } catch (e) {
+  }
+}
+function msHtml() {
+  const o = msState();
+  let h = '<div class="msBox"><h3>🎯 Misi Harian</h3>';
+  for (const id of o.ids) {
+    const m = MSP.find((x) => x.id == id);
+    if (!m) continue;
+    const p = o.p[id] || 0, done = p >= m.n;
+    h += '<div class="msRow' + (o.c[id] ? " got" : "") + '"><b>' + m.e + '</b><div class="msT">' + m.t + '<i><u style="width:' + Math.round(p / m.n * 100) + '%"></u></i><small>' + p + " / " + m.n + "</small></div>" + (o.c[id] ? "<span>✅</span>" : done ? `<button onclick="msClaim('` + id + `')">Ambil 💰` + m.r + "</button>" : '<span class="msR">💰' + m.r + "</span>") + "</div>";
+  }
+  const all = o.ids.every((id) => o.c[id]);
+  h += o.b ? '<p class="msDone">🌟 Semua misi hari ini selesai! Hebat!</p>' : all ? '<button class="big" onclick="msBonus()">🌟 Bonus semua misi: 💎2</button>' : '<p class="msHint">Selesaikan ketiga misi untuk bonus 💎2. Misi baru setiap hari!</p>';
+  return h + "</div>";
+}
+(function() {
+  const s0 = stat;
+  stat = function(k, v, mx) {
+    const r = s0.apply(this, arguments);
+    if (!mx && (k == "coinsTot" || k == "jumps" || k == "petSkill")) msAdd(k, v);
+    return r;
+  };
+  const f0 = foeStomp;
+  foeStomp = function(e) {
+    const sp = e && e.spiky;
+    const r = f0.apply(this, arguments);
+    if (!sp) msAdd("stomp");
+    return r;
+  };
+  const l0 = startLevel;
+  startLevel = function(n) {
+    SAFE = null;
+    return l0.apply(this, arguments);
+  };
+  if (typeof pnResult == "function") {
+    const p0 = pnResult;
+    pnResult = function() {
+      const had = PN.res;
+      const r = p0.apply(this, arguments);
+      if (!had && !arguments[1]) msAdd("lomba");
+      return r;
+    };
+  }
+  const d0 = hmDot;
+  hmDot = function() {
+    d0();
+    const d = document.getElementById("hmDot");
+    try {
+      if (d && msClaimable()) d.style.display = "block";
+    } catch (e) {
+    }
+  };
+  famBadge();
+  try {
+    hmDot();
+  } catch (e) {
+  }
+})();
 </script>
 </body>
 </html>
