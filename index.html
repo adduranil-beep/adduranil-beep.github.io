@@ -387,6 +387,8 @@ body:not(.ingame) #fsBtn{display:none!important}
 @media (max-width:480px){.hmOnT{display:none}#hmOn{padding-left:6px!important;padding-right:6px!important}#hmOn img{width:16px;height:16px}}
 @media (orientation:landscape) and (max-height:300px){#pskSel{width:45px!important;height:45px!important}}
 #msg .big+.big{margin-left:8px}
+body.perfLite .btn{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:#ffffff3d!important}
+body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::after,body.ingame .hmRib,body.ingame .hmPick,body.ingame #title .card{animation-play-state:paused!important}
 </style>
 </head>
 <body>
@@ -4630,6 +4632,7 @@ function hmCards(ts) {
   if (!HMC.list) HMC.list = [].slice.call(document.querySelectorAll("#title .cCv"));
   const rc = ctx, dpr = Math.min(2, window.devicePixelRatio || 1), t = HMC.t;
   for (const c of HMC.list) {
+    if (HSEL != c.dataset.h && HMC.t % 3) continue;
     const w = c.clientWidth, h = c.clientHeight;
     if (!w || !h) continue;
     const W2 = Math.round(w * dpr), H2 = Math.round(h * dpr);
@@ -10217,15 +10220,7 @@ function headAcc(S, girl, def) {
       });
       break;
     case "halo":
-      ctx.save();
-      ctx.strokeStyle = "#ffd600";
-      ctx.lineWidth = 3;
-      ctx.shadowColor = "#fff59d";
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.ellipse(0, -22 + Math.sin(tick * 0.1) * 2, 11, 4, 0, 0, 7);
-      ctx.stroke();
-      ctx.restore();
+      glowRing(0, -22 + Math.sin(tick * 0.1) * 2, 11, 4, 3, "#ffd600", "#fff59d", 10 / DPR);
       break;
   }
 }
@@ -11535,16 +11530,7 @@ function evoHighBack(id, e, w, h) {
     });
   }
   if (e >= 8) {
-    ctx.save();
-    ctx.translate(0, -h * 1.02);
-    ctx.strokeStyle = id == "topeng" ? "#ce93d8" : "#b9f6ca";
-    ctx.lineWidth = 4;
-    ctx.shadowColor = c;
-    ctx.shadowBlur = 12;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, w * 0.3, h * 0.07, 0, 0, 7);
-    ctx.stroke();
-    ctx.restore();
+    glowRing(0, -h * 1.02, w * 0.3, h * 0.07, 4, id == "topeng" ? "#ce93d8" : "#b9f6ca", c, 12 / DPR);
   }
   if (e >= 5) {
     ctx.save();
@@ -11630,6 +11616,26 @@ function evoHighFront(id, e, w, h, hasHat) {
 }
 const EVTINT = { topeng: [null, ["#ffeb3b", 0.16], ["#7c4dff", 0.28], ["#40c4ff", 0.24], ["#ffc107", 0.38], ["#00e5ff", 0.3], ["#6a1b9a", 0.3], ["#ff4081", 0.28], ["#311b92", 0.38], ["#ff9100", 0.34], ["#e040fb", 0.32]], moo: [null, ["#ff9800", 0.14], ["#e53935", 0.2], ["#e040fb", 0.18], ["#ffc107", 0.38], ["#ff7043", 0.26], ["#8d6e63", 0.26], ["#4dd0e1", 0.26], ["#00e676", 0.24], ["#ff3d00", 0.3], ["#7c4dff", 0.32]], unta: [null, ["#ffe082", 0.06], ["#ff9800", 0.08], ["#4fc3f7", 0.08], ["#ffc107", 0.14], ["#ff7043", 0.1], ["#8d6e63", 0.1], ["#80deea", 0.12], ["#ff9100", 0.12], ["#ffca28", 0.14], ["#7c4dff", 0.14]] };
 const EVWIDE = { topeng: [1, 1, 1.04, 1.06, 1.1, 1.1, 1.11, 1.12, 1.13, 1.14, 1.15], moo: [1, 1.04, 1.1, 1.06, 1.12, 1.13, 1.14, 1.14, 1.15, 1.16, 1.18], unta: [1, 1.02, 1.04, 1.06, 1.08, 1.1, 1.11, 1.12, 1.13, 1.14, 1.15] };
+function darkImg(im) {
+  if (im._dk !== void 0) return im._dk || im;
+  try {
+    const c = document.createElement("canvas");
+    c.width = im.width;
+    c.height = im.height;
+    const x = c.getContext("2d");
+    if (!("filter" in x)) {
+      im._dk = null;
+      return im;
+    }
+    x.filter = "brightness(.62)";
+    x.drawImage(im, 0, 0);
+    im._dk = c;
+    return c;
+  } catch (e) {
+    im._dk = null;
+    return im;
+  }
+}
 function tintImg(img, id, e) {
   const tt = EVTINT[id] && EVTINT[id][e];
   if (!tt || !img || !img.complete || !img.width) return img;
@@ -12082,10 +12088,10 @@ function untaRigDraw(R, h, po, ev) {
   const part = (n, a, dx, dark) => {
     const p = R[n];
     if (!p.img.complete) return;
-    const pim = tintImg(p.img, "unta", ev || 0);
+    let pim = tintImg(p.img, "unta", ev || 0);
     ctx.save();
     if (dx) ctx.translate(dx * k, 0);
-    if (dark) ctx.filter = "brightness(.62)";
+    if (dark) pim = darkImg(pim);
     if (a == null) {
       ctx.drawImage(pim, (p.x - cx) * k, (p.y - R.H) * k, p.w * k, p.h * k);
     } else {
@@ -12993,14 +12999,7 @@ function evoFront(pd, x, y, h) {
   if (e < 1) return;
   ctx.save();
   if (e >= 4) {
-    ctx.strokeStyle = "#ffd600";
-    ctx.lineWidth = 3;
-    ctx.shadowColor = "#fff59d";
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.ellipse(x, y - h - 8 + Math.sin(tick * 0.1) * 2, h * 0.22, h * 0.07, 0, 0, 7);
-    ctx.stroke();
-    ctx.shadowBlur = 0;
+    glowRing(x, y - h - 8 + Math.sin(tick * 0.1) * 2, h * 0.22, h * 0.07, 3, "#ffd600", "#fff59d", 10 / DPR);
   }
   ctx.font = "bold 9px Fredoka,sans-serif";
   ctx.textAlign = "center";
@@ -13876,6 +13875,7 @@ const hsh = (i) => {
   return x - Math.floor(x);
 };
 let lightT = 0, LOWFX = !!OLDDEV, fxFr = 0, fxT0 = 0;
+let fxLow = 0;
 function fxPerf(ts) {
   if (!fxT0) {
     fxT0 = ts;
@@ -13886,18 +13886,59 @@ function fxPerf(ts) {
   if (ts - fxT0 > 2500) {
     const fps = fxFr / ((ts - fxT0) / 1e3);
     if (state == "play" && fps < 48) {
-      if (!LOWFX) LOWFX = true;
-      else if (QLV < QCAP.length - 1) {
-        QLV++;
-        try {
-          resize();
-        } catch (e) {
+      fxLow++;
+      if (!document.body.classList.contains("perfLite")) document.body.classList.add("perfLite");
+      else if (fxLow >= 3 && fps < 40) {
+        fxLow = 1;
+        if (!LOWFX) LOWFX = true;
+        else if (QLV < QCAP.length - 1) {
+          QLV++;
+          try {
+            resize();
+          } catch (e) {
+          }
         }
       }
-    }
+    } else if (state == "play") fxLow = 0;
     fxT0 = ts;
     fxFr = 0;
   }
+}
+const SPR = /* @__PURE__ */ new Map(), GRC = /* @__PURE__ */ new Map();
+function spr(key2, w, h, fn) {
+  const k = key2 + "|" + DPR;
+  let c = SPR.get(k);
+  if (c) return c;
+  if (SPR.size > 120) SPR.clear();
+  c = document.createElement("canvas");
+  c.width = Math.max(1, Math.ceil(w * DPR));
+  c.height = Math.max(1, Math.ceil(h * DPR));
+  const x = c.getContext("2d"), rc = ctx;
+  ctx = x;
+  try {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    fn();
+  } finally {
+    ctx = rc;
+  }
+  c._w = w;
+  c._h = h;
+  SPR.set(k, c);
+  return c;
+}
+function glowRing(cx, cy, rx, ry, lw, col, sc, sb) {
+  rx = Math.round(rx * 2) / 2;
+  ry = Math.round(ry * 2) / 2;
+  const pad = sb * 2 + lw + 4, w = rx * 2 + pad * 2, h = ry * 2 + pad * 2, c = spr("gr" + rx + "_" + ry + lw + col + sc + sb, w, h, () => {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = lw;
+    ctx.shadowColor = sc;
+    ctx.shadowBlur = sb * DPR;
+    ctx.beginPath();
+    ctx.ellipse(w / 2, h / 2, rx, ry, 0, 0, 7);
+    ctx.stroke();
+  });
+  ctx.drawImage(c, cx - w / 2, cy - h / 2, w, h);
 }
 function bgBack(th) {
   const F = LVFX[level] || LVFX[1], has = (k) => F.fx.includes(k), t = tick;
@@ -14092,16 +14133,24 @@ function bgBack(th) {
   }
   for (let L2 = 0; L2 < 2; L2++) {
     const sp = L2 ? 0.3 : 0.15, R = L2 ? 170 : 230, base = L2 ? 440 : 400, per = L2 ? 300 : 420;
-    for (let i = -1; i < VW / per + 2; i++) {
-      const hx = i * per - cam * sp % per + per / 2, g = ctx.createRadialGradient(hx - R * 0.35, base - R * 0.7, R * 0.1, hx, base, R * 1.1);
+    const gk = "hill" + L2 + th[2];
+    let g = GRC.get(gk);
+    if (!g) {
+      g = ctx.createRadialGradient(-R * 0.35, base - R * 0.7, R * 0.1, 0, base, R * 1.1);
       g.addColorStop(0, shade(th[2], L2 ? 40 : 70));
       g.addColorStop(1, shade(th[2], L2 ? -25 : 5));
+      GRC.set(gk, g);
+    }
+    for (let i = -1; i < VW / per + 2; i++) {
+      const hx = i * per - cam * sp % per + per / 2;
+      ctx.save();
+      ctx.translate(hx, 0);
       ctx.fillStyle = g;
       ctx.globalAlpha = L2 ? 1 : 0.6;
       ctx.beginPath();
-      ctx.ellipse(hx, base, R, R * 0.7, 0, Math.PI, 0);
+      ctx.ellipse(0, base, R, R * 0.7, 0, Math.PI, 0);
       ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.restore();
     }
   }
   {
@@ -15410,10 +15459,14 @@ function postPass() {
 }
 function hazePass(F) {
   if (!GFX.hi || LOWFX) return;
-  const g = ctx.createLinearGradient(0, 180, 0, 430);
   const c = F.tod == "night" ? "60,70,120" : F.tod == "sunset" ? "255,190,150" : "235,245,255";
-  g.addColorStop(0, `rgba(${c},0)`);
-  g.addColorStop(1, `rgba(${c},.22)`);
+  let g = GRC.get("hz" + c);
+  if (!g) {
+    g = ctx.createLinearGradient(0, 180, 0, 430);
+    g.addColorStop(0, `rgba(${c},0)`);
+    g.addColorStop(1, `rgba(${c},.22)`);
+    GRC.set("hz" + c, g);
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 180, VW, 250);
 }
@@ -19905,10 +19958,14 @@ function draw() {
   }
   if (state == "f3d" || state == "pinang") return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const sky = ctx.createLinearGradient(0, 0, 0, 480);
   const th = THEMES[(level - 1) % THEMES.length];
-  sky.addColorStop(0, th[0]);
-  sky.addColorStop(1, th[1]);
+  let sky = GRC.get("sky" + th[0] + th[1]);
+  if (!sky) {
+    sky = ctx.createLinearGradient(0, 0, 0, 480);
+    sky.addColorStop(0, th[0]);
+    sky.addColorStop(1, th[1]);
+    GRC.set("sky" + th[0] + th[1], sky);
+  }
   if (room == "quake") {
     qkBg();
   } else if (room == "under") {
@@ -20977,7 +21034,7 @@ function loop(ts) {
   {
     const ig = title.classList.contains("hide");
     document.body.classList.toggle("ingame", ig);
-    if (ig && document.body.classList.contains("portrait") && (window._skyK !== level + "|" + curArea + "|" + (room || "") && tick % 10 == 5 || tick % 600 == 0)) {
+    if (ig && document.body.classList.contains("portrait") && (window._skyK !== level + "|" + curArea + "|" + (room || "") && tick % 10 == 5)) {
       window._skyK = level + "|" + curArea + "|" + (room || "");
       try {
         const w2 = cv.width, h2 = cv.height, a1 = ctx.getImageData(Math.round(w2 * 0.2), 2, 1, 1).data, a2 = ctx.getImageData(Math.round(w2 * 0.5), h2 - 3, 1, 1).data, bs = document.body.style;
