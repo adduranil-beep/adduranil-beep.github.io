@@ -475,6 +475,20 @@ body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::a
 @media (max-width:400px){.villains>span:first-child{flex-basis:100%;text-align:center;font-weight:700}}
 @media (max-width:400px){.shopTop{font-size:17px!important;flex-wrap:wrap;gap:4px;align-items:center}.shopTop span{font-size:14px!important;white-space:nowrap}.villains img{width:34px!important;height:34px!important}}
 @media (orientation:landscape) and (min-height:520px){#homeBtn,#skBtn,#mBtn,#fsBtn{top:max(40px,calc(9.5vh + 2px))!important}}
+
+.albSong{display:flex;align-items:center;gap:12px;width:100%;margin:6px 0 10px;padding:8px 12px 8px 8px;border:3px solid #ffb74d;border-radius:16px;background:linear-gradient(90deg,#4a148c,#ad1457);color:#fff;text-align:left;cursor:pointer;font-family:Fredoka,sans-serif;box-shadow:0 4px 0 #6a1b9a}
+.albSong:active{transform:translateY(2px);box-shadow:0 2px 0 #6a1b9a}
+.albSongCv{flex:0 0 auto;width:58px;height:58px;border-radius:12px;background:center/cover;border:2px solid #ffd54f}
+.albSongTx{flex:1;min-width:0}.albSongTx b{display:block;font-size:17px}.albSongTx small{display:block;font-size:12px;opacity:.9}
+.albSongPl{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:#ffd54f;color:#4a148c;display:flex;align-items:center;justify-content:center;font-size:20px;animation:hmPulse 1.2s infinite}
+.sgBig{width:min(34vw,34vh,170px);height:auto;border-radius:18px;border:4px solid #ffd54f;box-shadow:0 10px 30px #000a;margin-bottom:8px;animation:albPop2 1s ease}
+.sgOv .albTitle .albGo{margin-top:12px}.sgMsg{margin-top:8px;font-size:14px;color:#ffd54f;min-height:18px}
+.sgBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.sgInfo{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;background:#000a;border:2px solid #ffffff55;border-radius:18px;padding:6px 14px 6px 6px;z-index:5;max-width:92%}
+.sgInfo.hide{display:none}.sgInfo img{width:42px;height:42px;border-radius:10px}.sgInfo b{display:block;font-size:15px;white-space:nowrap}.sgInfo small{font-size:12px;opacity:.9}
+.sgInfo.paused{border-color:#ffd54f}
+@media (orientation:landscape) and (max-height:500px){.sgInfo{left:12px;transform:none;bottom:10px;max-width:40%}}
+@media (max-height:500px){.sgBig{width:min(26vh,110px)}.sgOv .albT2{font-size:clamp(22px,5vw,36px)}.albSongCv{width:44px;height:44px}.albSongTx b{font-size:15px}}
 </style>
 </head>
 <body>
@@ -2028,6 +2042,7 @@ function albMark(i) {
   }
 }
 function albUnlocked(i) {
+  return true;
   let mx = 1;
   try {
     mx = +localStorage[PK("kkadMax")] || 1;
@@ -2052,10 +2067,7 @@ function albumPlay(n) {
     }
     albMark(n);
     const prevMus = MUS.name;
-    try {
-      musPlay("title");
-    } catch (e) {
-    }
+    songBgStart();
     key.L = key.R = key.J = 0;
     let ov = document.getElementById("albOv");
     if (ov) ov.remove();
@@ -2080,6 +2092,7 @@ function albumPlay(n) {
       clearTimeout(timer);
       clearInterval(typer);
       ov.classList.add("out");
+      songBgStop();
       setTimeout(() => {
         ov.remove();
         try {
@@ -2092,7 +2105,7 @@ function albumPlay(n) {
     const ending = () => {
       cap.classList.add("hide");
       im.forEach((e) => e.classList.remove("on"));
-      ttl.innerHTML = '<div class="albT1">❤️</div><div class="albT2">Ummi &amp; Abi sayang kalian</div><div class="albT3">' + (n < ALB.length - 1 ? "Kenangan berikutnya terbuka setelah Level " + ALB[n + 1].lv + " 🔓" : "Terima kasih sudah bermain, pahlawan kecil kami! 🌈") + '</div><button class="albGo">Lanjut ▶</button>';
+      ttl.innerHTML = '<div class="albT1">❤️</div><div class="albT2">Ummi &amp; Abi sayang kalian</div><div class="albT3">' + (n < ALB.length - 1 ? "Masih ada kenangan lain di Album Kenangan 📽️" : "Terima kasih sudah bermain, pahlawan kecil kami! 🌈") + '</div><button class="albGo">Lanjut ▶</button>';
       ttl.classList.remove("gone");
       bar.style.width = "100%";
       ttl.querySelector(".albGo").onclick = (e) => {
@@ -2174,12 +2187,16 @@ function albumMenu() {
   if (ov) ov.remove();
   ov = document.createElement("div");
   ov.id = "albMenu";
-  ov.innerHTML = '<div class="albMBox"><button class="albMX">✕</button><h2>📽️ Album Kenangan</h2><p>Pesan Ummi &amp; Abi terbuka setiap 5 kemenangan level.</p><div class="albMGrid">' + ALB.map((a, i) => {
+  ov.innerHTML = '<div class="albMBox"><button class="albMX">✕</button><h2>📽️ Album Kenangan</h2><p>Semua pesan Ummi &amp; Abi sudah terbuka. Putar kapan saja! 💞</p><button class="albSong"><span class="albSongCv" style="background-image:url(' + SONG.cv + ')"></span><span class="albSongTx"><b>🎵 Tumbuhlah, Sayangku</b><small>Lagu untuk Kakak Sofia &amp; Adik Ali • 4:24</small></span><span class="albSongPl">▶</span></button><div class="albMGrid">' + ALB.map((a, i) => {
     const u = albUnlocked(i);
     return '<button class="albMI' + (u ? "" : " lock") + '" data-i="' + i + '"><span class="albMTh" style="background-image:url(' + (u ? ALBIMG[a.s[0][0] - 1] : "") + ')">' + (u ? "▶" : "🔒") + "</span><b>" + a.t.replace(/^Kenangan (\d+): /, "$1. ") + "</b><small>" + (u ? "Putar lagi" : "Menang Level " + a.lv) + "</small></button>";
   }).join("") + "</div></div>";
   document.body.appendChild(ov);
   ov.querySelector(".albMX").onclick = () => ov.remove();
+  ov.querySelector(".albSong").onclick = () => {
+    ov.remove();
+    songPlay();
+  };
   ov.querySelectorAll(".albMI").forEach((b) => b.onclick = () => {
     const i = +b.dataset.i;
     if (!albUnlocked(i)) {
@@ -21879,6 +21896,239 @@ function msFix() {
     }
   }
 }
+const SONG = { src: "tumbuhlah.mp3", a: null, fade: null, cv: "data:image/jpeg;base64,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" };
+function songAudio() {
+  if (!SONG.a) {
+    const a = new Audio();
+    a.preload = "auto";
+    a.src = SONG.src;
+    SONG.a = a;
+  }
+  return SONG.a;
+}
+function songFade(to, ms, done) {
+  const a = songAudio();
+  clearInterval(SONG.fade);
+  const v0 = a.volume, st = Date.now();
+  SONG.fade = setInterval(() => {
+    const k = Math.min(1, (Date.now() - st) / ms);
+    try {
+      a.volume = Math.max(0, Math.min(1, v0 + (to - v0) * k));
+    } catch (e) {
+    }
+    if (k >= 1) {
+      clearInterval(SONG.fade);
+      done && done();
+    }
+  }, 40);
+}
+function songFmt(t) {
+  t = Math.max(0, Math.floor(t || 0));
+  return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
+}
+function songBgStart() {
+  if (!MUS.on) {
+    return;
+  }
+  try {
+    musStop();
+    const a = songAudio();
+    a.currentTime = 0;
+    a.volume = 0;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {
+      try {
+        musPlay("title");
+      } catch (e) {
+      }
+    });
+    songFade(0.6, 1500);
+  } catch (e) {
+    try {
+      musPlay("title");
+    } catch (e2) {
+    }
+  }
+}
+function songBgStop() {
+  try {
+    const a = SONG.a;
+    if (a && !a.paused) songFade(0, 500, () => a.pause());
+  } catch (e) {
+  }
+}
+function songPlay() {
+  const prevMus = MUS.name;
+  key.L = key.R = key.J = 0;
+  let ov = document.getElementById("albOv");
+  if (ov) ov.remove();
+  ov = document.createElement("div");
+  ov.id = "albOv";
+  ov.className = "sgOv";
+  ov.innerHTML = '<div class="albBg"></div><div class="albPh"><img class="albI0"><img class="albI1"></div><div class="albVig"></div><div class="albHearts"></div><div class="albTop"><span class="albTag">🎵 Lagu Keluarga</span><button class="albSkip">Tutup ✕</button></div><div class="albBar"><i></i></div><div class="sgInfo hide"><img class="sgCv" src="' + SONG.cv + '"><div><b>Tumbuhlah, Sayangku</b><small><span class="sgSt">▶</span> <span class="sgT">0:00</span> / <span class="sgD">4:24</span></small></div></div><div class="albTitle"><img class="sgBig" src="' + SONG.cv + '"><div class="albT1">🎵 Lagu untuk Kakak Sofia &amp; Adik Ali</div><div class="albT2">Tumbuhlah, Sayangku</div><div class="albT3">Dengarkan bersama Ummi &amp; Abi sambil melihat foto-foto kenangan 💞</div><button class="albGo sgGo">▶ Putar Lagu</button><div class="sgMsg"></div></div><div class="albHint">Ketuk layar untuk jeda / lanjut</div>';
+  document.body.appendChild(ov);
+  const $ = (s) => ov.querySelector(s), bg = $(".albBg"), im = [$(".albI0"), $(".albI1")], bar = $(".albBar i"), ttl = $(".albTitle"), info = $(".sgInfo"), msg2 = $(".sgMsg");
+  for (let i = 0; i < 14; i++) {
+    const h = document.createElement("span");
+    h.textContent = ["❤️", "💕", "✨", "💖", "🎵"][i % 5];
+    h.style.left = Math.random() * 100 + "%";
+    h.style.animationDelay = Math.random() * 6 + "s";
+    h.style.fontSize = 14 + Math.random() * 16 + "px";
+    $(".albHearts").appendChild(h);
+  }
+  const a = songAudio();
+  let k = -1, cur = 0, timer = null, done = false, started2 = false;
+  const order = ALBIMG.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const slide = () => {
+    clearTimeout(timer);
+    k++;
+    const src = ALBIMG[order[k % order.length]];
+    cur ^= 1;
+    const p = im[cur], q = im[cur ^ 1];
+    p.src = src;
+    p.style.animation = "none";
+    void p.offsetWidth;
+    p.style.animation = "albKB" + k % 3 + " 8.2s ease-out forwards";
+    p.classList.add("on");
+    q.classList.remove("on");
+    bg.style.backgroundImage = "url(" + src + ")";
+    timer = setTimeout(() => {
+      if (!a.paused) slide();
+      else timer = setTimeout(slide, 500);
+    }, 7e3);
+  };
+  const tu = () => {
+    const d = a.duration || 264;
+    bar.style.width = a.currentTime / d * 100 + "%";
+    $(".sgT").textContent = songFmt(a.currentTime);
+    $(".sgD").textContent = songFmt(d);
+  };
+  const st = () => {
+    $(".sgSt").textContent = a.paused ? "⏸" : "▶";
+    info.classList.toggle("paused", a.paused);
+  };
+  const onEnd = () => {
+    clearTimeout(timer);
+    im.forEach((e) => e.classList.remove("on"));
+    info.classList.add("hide");
+    ttl.innerHTML = '<div class="albT1">❤️</div><div class="albT2">Ummi &amp; Abi sayang kalian</div><div class="albT3">Tumbuhlah jadi anak yang sholeh, sehat, dan bahagia 🌈</div><div class="sgBtns"><button class="albGo sgAgain">🔁 Putar lagi</button><button class="albGo sgClose">Tutup</button></div>';
+    ttl.classList.remove("gone");
+    ttl.querySelector(".sgAgain").onclick = (e) => {
+      e.stopPropagation();
+      a.currentTime = 0;
+      begin();
+    };
+    ttl.querySelector(".sgClose").onclick = (e) => {
+      e.stopPropagation();
+      finish();
+    };
+  };
+  const onErr = () => {
+    if (done) return;
+    msg2.textContent = "Lagu belum bisa diputar. Periksa sambungan internet lalu coba lagi.";
+    ttl.classList.remove("gone");
+    info.classList.add("hide");
+    started2 = false;
+  };
+  const onWait = () => {
+    if (started2) $(".sgSt").textContent = "⏳";
+  };
+  a.addEventListener("timeupdate", tu);
+  a.addEventListener("play", st);
+  a.addEventListener("pause", st);
+  a.addEventListener("ended", onEnd);
+  a.addEventListener("error", onErr);
+  a.addEventListener("waiting", onWait);
+  a.addEventListener("playing", st);
+  const begin = () => {
+    msg2.textContent = "Memuat lagu…";
+    try {
+      musStop();
+    } catch (e) {
+    }
+    clearInterval(SONG.fade);
+    a.volume = 1;
+    const p = a.play();
+    const go = () => {
+      msg2.textContent = "";
+      started2 = true;
+      ttl.classList.add("gone");
+      info.classList.remove("hide");
+      if (k < 0 || !im[cur].classList.contains("on")) slide();
+      st();
+    };
+    if (p && p.then) p.then(go).catch(onErr);
+    else go();
+  };
+  const finish = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    a.removeEventListener("timeupdate", tu);
+    a.removeEventListener("play", st);
+    a.removeEventListener("pause", st);
+    a.removeEventListener("ended", onEnd);
+    a.removeEventListener("error", onErr);
+    a.removeEventListener("waiting", onWait);
+    a.removeEventListener("playing", st);
+    songFade(0, 400, () => {
+      a.pause();
+      try {
+        a.currentTime = 0;
+      } catch (e) {
+      }
+    });
+    ov.classList.add("out");
+    setTimeout(() => {
+      ov.remove();
+      try {
+        if (prevMus) musPlay(prevMus);
+      } catch (e) {
+      }
+      if (state == "title" || !document.getElementById("albMenu")) try {
+        albumMenu();
+      } catch (e) {
+      }
+    }, 600);
+  };
+  $(".sgGo").onclick = (e) => {
+    e.stopPropagation();
+    begin();
+  };
+  $(".albSkip").onclick = (e) => {
+    e.stopPropagation();
+    finish();
+  };
+  ov.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button")) return;
+    e.preventDefault();
+    if (!started2) return;
+    if (a.paused) {
+      a.play().catch(() => {
+      });
+    } else a.pause();
+  });
+  const kh = (e) => {
+    if (!document.body.contains(ov)) {
+      removeEventListener("keydown", kh, true);
+      return;
+    }
+    e.stopPropagation();
+    if (e.key == "Escape") finish();
+    else if (e.key == " " && started2) {
+      a.paused ? a.play().catch(() => {
+      }) : a.pause();
+    }
+  };
+  addEventListener("keydown", kh, true);
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && SONG.a && !SONG.a.paused) SONG.a.pause();
+});
 function msState() {
   let o = {};
   try {
