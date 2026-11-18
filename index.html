@@ -3792,6 +3792,9 @@ function qkFreeAt(x, w) {
   if (helpers.some((h) => near(h.x / T, 5)) || signs.some((s) => near(s.x / T, 3)) || keys.some((k) => near(k.x / T, 9))) return false;
   if (cpList.some((c) => near(c / T, 3))) return false;
   if (FWG.some((g) => near(g.x + 2, 6))) return false;
+  if (typeof PNG != "undefined" && PNG && near(PNG.x + 2, 7)) return false;
+  if (typeof LGG != "undefined" && LGG && near(LGG.x + 2, 7)) return false;
+  if (typeof F3G != "undefined" && F3G && near(F3G.x + 2, 6)) return false;
   if (F3G && near(F3G.x + 2, 5)) return false;
   if (portals) for (const k in portals) {
     const p = portals[k];
@@ -4265,7 +4268,7 @@ function chOnSay(o, from) {
   if (!o) return;
   if (o.t == "c") chGot(o, from);
   else if (o.t == "v") voGot(o, from);
-  else if (o.t == "pn" || o.t == "pnA" || o.t == "lgo" || o.t == "lres") pnOnSay(o, from);
+  else if (o.t == "pn" || o.t == "pnA" || o.t == "lgo" || o.t == "lres" || o.t == "lcan") pnOnSay(o, from);
 }
 function chSend(txt) {
   txt = chClean(txt);
@@ -4839,9 +4842,25 @@ function pnRival(i) {
   const h = hero, order = [h == "girl" ? "boy" : "girl", h == "abi" ? "ummi" : "abi", h == "ummi" ? "boy" : "ummi", h == "boy" ? "girl" : "boy"];
   return order[i % order.length];
 }
+function pnSafe() {
+  if (!P) return null;
+  if (P.ground) return { g: 1 };
+  const tx = Math.floor((P.x + 12) / T);
+  for (let d = 0; d < 60; d++) for (const sx of [tx - d, tx + d]) {
+    if (sx < 1 || sx >= W - 1) continue;
+    for (let y = 2; y < 14; y++) {
+      if (G[y] && solid(G[y][sx]) && !solid(G[y - 1][sx]) && !solid(G[y - 2][sx])) {
+        return { g: 0, x: sx * T + 4, y: y * T - 46 };
+      }
+    }
+  }
+  return null;
+}
 function pnMenu() {
   key.L = key.R = key.J = 0;
+  PN.safe = pnSafe();
   if (P) P.vx = 0;
+  document.body.classList.add("inlomba");
   state = "pinang";
   PN.on = true;
   PN.st = "menu";
@@ -4863,7 +4882,7 @@ function pnMenu() {
   };
 }
 function pnReset(game) {
-  Object.assign(PN, { game, st: "", line: [], me: 0, v: 0, w: 0, cpu: {}, res: null, t: 0, fx: [], act: {}, sent: 0, air: 0, fall: 0, slip: 200, ball: null, meter: 0, done: false });
+  Object.assign(PN, { safe: PN.safe, game, st: "", line: [], me: 0, v: 0, w: 0, cpu: {}, res: null, t: 0, fx: [], act: {}, sent: 0, air: 0, fall: 0, slip: 200, ball: null, meter: 0, done: false });
   const pid = BANK.pet && BANK.pet[hero];
   PN.prize = PETS[pid] && Math.random() < 0.5 ? { k: "pet", id: pid } : { k: "doll", e: PNDOLL[Math.floor(Math.random() * PNDOLL.length)] };
   const b = document.getElementById("pnBtn");
@@ -4946,6 +4965,12 @@ function pnOnSay(o, from) {
       });
       pnBegin();
     }
+  } else if (o.t == "lcan") {
+    if (PN.on && !PN.host && o.gid == PN.g && (PN.st == "join" || PN.st == "cd")) {
+      pnSetMsg("Lomba dibatalkan oleh " + String(o.nm || "teman").replace(/[<>&]/g, ""));
+      PN.st = "done";
+      setTimeout(pnExit, 1600);
+    }
   } else if (o.t == "lres") {
     if (PN.on && !PN.host && o.gid == PN.g && !PN.res) pnResult(o.win);
   }
@@ -4978,10 +5003,13 @@ function pnInvite(o, from) {
     } catch (err) {
     }
     key.L = key.R = key.J = 0;
+    const sf = pnSafe();
     state = "pinang";
     PN.on = true;
     pnUI();
     pnReset(o.game);
+    PN.safe = sf;
+    document.body.classList.add("inlomba");
     PN.host = false;
     PN.g = o.gid;
     PN.hostId = from;
@@ -5203,7 +5231,14 @@ function pnResult(win, quit) {
 }
 function pnExit() {
   if (!PN.on) return;
+  if (PN.host && PN.g && (PN.st == "wait" || PN.st == "cd")) {
+    try {
+      CO.rm && CO.rm.say && CO.rm.say({ t: "lcan", k: "lcan" + PN.g, gid: PN.g, nm: HN(hero) });
+    } catch (e) {
+    }
+  }
   PN.on = false;
+  document.body.classList.remove("inlomba");
   PN.st = "";
   const ov = document.getElementById("pnOv");
   if (ov) ov.remove();
@@ -5212,6 +5247,11 @@ function pnExit() {
   if (P) {
     P.inv = Math.max(P.inv, 90);
     P.vx = 0;
+    P.vy = 0;
+    if (PN.safe && !PN.safe.g) {
+      P.x = PN.safe.x;
+      P.y = PN.safe.y;
+    }
   }
   key.L = key.R = key.J = 0;
   try {
@@ -5723,6 +5763,7 @@ function pnRender() {
 #pnInv{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:85;background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 6px 18px #0007;font:600 13px Fredoka,sans-serif;color:#4e342e;display:flex;align-items:center;gap:8px;max-width:94vw}
 #pnInv button{border:0;border-radius:12px;background:#ff7043;color:#fff;font:800 14px Fredoka,sans-serif;padding:8px 12px;min-height:40px}#pnInvT{font-weight:800;color:#e65100}
 @keyframes hmBob{50%{transform:translateY(-6px)}}
+body.inlomba #chBtns{z-index:96}body.inlomba #chPan{z-index:98}body.inlomba #chToast,body.inlomba #chSpk{z-index:97}body.inlomba #chToast{top:56px}
 @media (orientation:landscape) and (max-height:420px){#pnBtn{width:130px;height:78px;font-size:22px;right:16px;left:auto;transform:none}#pnBtn:active{transform:translateY(4px)}#pnBtn b{font-size:17px}#pnMenu{grid-template-columns:repeat(4,1fr);width:min(96vw,640px)}#pnMenu button{min-height:84px}}
 `;
   document.head.appendChild(st);
@@ -13963,7 +14004,7 @@ function drawRemote() {
     }
     ctx.font = "bold 12px Fredoka,sans-serif";
     ctx.textAlign = "center";
-    const lb = "📱 HP " + (r.r || "?") + " • " + String(r.nm || HN(key2)).slice(0, 16), w2 = ctx.measureText(lb).width + 12;
+    const lb = "📱 HP " + (r.r || "?") + " • " + (r.st == "pinang" ? "🇮🇩 " : "") + String(r.nm || HN(key2)).slice(0, 16), w2 = ctx.measureText(lb).width + 12;
     rr(o.x + 12 - w2 / 2, o.y - 34, w2, 18, 9, (HDEF[key2] || HDEF.girl).col + "dd");
     ctx.fillStyle = "#fff";
     ctx.fillText(lb, o.x + 12, o.y - 21);
