@@ -467,6 +467,14 @@ body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::a
 @media (orientation:landscape) and (max-width:600px){
  .pbT{display:none}
 }
+
+/* ===== QA tampilan ===== */
+.hmBox h2{padding:0 40px;box-sizing:border-box}
+.albMBox h2{padding-right:44px}
+.villains{flex-wrap:wrap;gap:6px 14px!important}
+@media (max-width:400px){.villains>span:first-child{flex-basis:100%;text-align:center;font-weight:700}}
+@media (max-width:400px){.shopTop{font-size:17px!important;flex-wrap:wrap;gap:4px;align-items:center}.shopTop span{font-size:14px!important;white-space:nowrap}.villains img{width:34px!important;height:34px!important}}
+@media (orientation:landscape) and (min-height:520px){#homeBtn,#skBtn,#mBtn,#fsBtn{top:max(40px,calc(9.5vh + 2px))!important}}
 </style>
 </head>
 <body>
@@ -4880,6 +4888,11 @@ function pnDraw() {
   ctx.restore();
 }
 function pnCheck() {
+  if (PN.pendInv && state == "play" && !PN.on && !room && !storyQ) {
+    const q = PN.pendInv;
+    PN.pendInv = null;
+    if (Date.now() - q.t < 9e3) pnInvite(q.o, q.from);
+  }
   const g = PNG;
   if (!g || room || state != "play" || !P || PN.on) return;
   if (g.cd > 0) {
@@ -5021,7 +5034,11 @@ function pnBegin() {
 }
 function pnOnSay(o, from) {
   if (o.t == "pn") {
-    if (PN.on || state != "play" || room) return;
+    if (PN.on || room) return;
+    if (state != "play") {
+      PN.pendInv = { o, from, t: Date.now() };
+      return;
+    }
     pnInvite(o, from);
   } else if (o.t == "pnA") {
     if (PN.on && PN.host && PN.st == "wait" && o.gid == PN.g && !PN.line.some((p) => p.id == from) && PN.line.length < 4) {
@@ -9454,6 +9471,10 @@ function startLevel(n) {
     lgPlace();
   } catch (e) {
   }
+  try {
+    msFix();
+  } catch (e) {
+  }
   cpX = 3 * T;
   cpList = helpers.map((h) => h.x - T).concat(signs.map((s) => s.x - T), [checkpoint]).sort((a, b) => a - b);
   spawn();
@@ -9661,11 +9682,15 @@ function update() {
           winT = 1e9;
           const nx = level + 1;
           const lv0 = level;
-          story([[null, "📖 Cerita penutup Level " + level + ": " + LNAMES[level - 1]]].concat(ep, done)).then(() => albumThen(lv0, () => startLevel(nx)));
+          story([[null, "📖 Cerita penutup Level " + level + ": " + LNAMES[level - 1]]].concat(ep, done)).then(() => albumThen(lv0, () => {
+            if (level == lv0 && state != "title" && state != "msg") startLevel(nx);
+          }));
         } else {
           winT = 1e9;
           const lv0 = level, nx = level + 1;
-          albumThen(lv0, () => startLevel(nx));
+          albumThen(lv0, () => {
+            if (level == lv0 && state != "title" && state != "msg") startLevel(nx);
+          });
         }
       } else {
         winT = 1e9;
@@ -21833,6 +21858,27 @@ const MSP = [
   { id: "skill", k: "petSkill", n: 4, e: "🐾", t: "Pakai skill peliharaan 4 kali", r: 40 },
   { id: "coop", k: "coop", n: 5, e: "👨‍👩‍👧‍👦", t: "Main bersama keluarga/teman 5 menit", r: 70 }
 ];
+function msFix() {
+  if (!MS || !MS.items || room) return;
+  const gnd = (x) => G[13] && G[13][x] && solid(G[13][x]) && G[13][x] != 35 && !solid(G[12][x]) && !solid(G[11][x]);
+  for (const it of MS.items) {
+    const cx = Math.floor(it.x / T);
+    let ok = false;
+    for (let y = Math.max(0, Math.floor(it.y / T)); y < H; y++) if (G[y] && solid(G[y][cx])) {
+      ok = true;
+      break;
+    }
+    if (ok) continue;
+    for (let d = 1; d < 20; d++) {
+      const c = [cx - d, cx + d].find((x) => x > 2 && x < W - 2 && gnd(x));
+      if (c != null) {
+        it.x = c * T + 16;
+        it.y = 12 * T + 16;
+        break;
+      }
+    }
+  }
+}
 function msState() {
   let o = {};
   try {
