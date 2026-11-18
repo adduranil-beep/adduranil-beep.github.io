@@ -489,6 +489,17 @@ body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::a
 .sgInfo.paused{border-color:#ffd54f}
 @media (orientation:landscape) and (max-height:500px){.sgInfo{left:12px;transform:none;bottom:10px;max-width:40%}}
 @media (max-height:500px){.sgBig{width:min(26vh,110px)}.sgOv .albT2{font-size:clamp(22px,5vw,36px)}.albSongCv{width:44px;height:44px}.albSongTx b{font-size:15px}}
+
+.axOv .albCap{bottom:calc(76px + env(safe-area-inset-bottom))}
+.axCh{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);z-index:6;background:linear-gradient(90deg,#ad1457,#6a1b9a);border:3px solid #ffd54f;border-radius:18px;padding:6px 18px 8px;font:700 clamp(17px,3.6vw,26px) Fredoka,sans-serif;text-align:center;box-shadow:0 8px 24px #0009;white-space:nowrap;pointer-events:none}
+.axCh small{display:block;font-size:12px;color:#ffd54f;letter-spacing:2px;text-transform:uppercase}
+.axCh.hide{display:none}.axCh.pop{animation:albPop2 .8s ease}
+.axCtl{gap:6px!important;padding:6px 12px 6px 6px!important}
+.axB{width:40px;height:40px;border-radius:50%;border:2px solid #ffffff88;background:#ffffff22;color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+.axPlay{background:#ffd54f;color:#4a148c;border-color:#fff}
+.axTm{margin-left:4px;min-width:0}.axTm b{display:block;font-size:14px;white-space:nowrap}.axTm small{font-size:12px;opacity:.9;white-space:nowrap}
+@media (max-width:380px){.axTm b{font-size:12px}.axB{width:36px;height:36px;font-size:15px}}
+@media (orientation:landscape) and (max-height:500px){.axOv .albCap{bottom:calc(64px + env(safe-area-inset-bottom));left:auto;right:10px;max-width:46%;transform:none}.axCh{top:calc(58px + env(safe-area-inset-top));left:auto;right:12px;transform:none}.axOv .albPh img{left:3%;max-width:50%;max-height:72%;top:13%}.axOv .albCap{max-width:44%}.axCtl{left:10px!important;transform:none!important;bottom:8px!important;max-width:48%}.axTm b{font-size:12px}.axB{width:34px;height:34px;font-size:14px}}
 </style>
 </head>
 <body>
@@ -2050,7 +2061,7 @@ function albUnlocked(i) {
   }
   return albSeen() > i || mx > ALB[i].lv;
 }
-function albumThen(lv, fn) {
+function albumThenOld(lv, fn) {
   const i = ALB.findIndex((a) => a.lv == lv);
   if (i < 0) {
     fn();
@@ -2182,7 +2193,7 @@ function albumPlay(n) {
     timer = setTimeout(next, 3200);
   });
 }
-function albumMenu() {
+function albumMenuOld() {
   let ov = document.getElementById("albMenu");
   if (ov) ov.remove();
   ov = document.createElement("div");
@@ -22129,6 +22140,314 @@ function songPlay() {
 document.addEventListener("visibilitychange", () => {
   if (document.hidden && SONG.a && !SONG.a.paused) SONG.a.pause();
 });
+const ALBX = [
+  ["Hari Kakak Sofia Lahir", [[15, "b", "Hari pertama kamu lahir, dunia Ummi dan Abi jadi jauh lebih terang."], [14, "a", "Kakak Sofia, kamu adalah hadiah terindah dalam hidup Ummi dan Abi."], [10, "b", "Senyum kecilmu membuat semua lelah Ummi hilang seketika."], ["n08", "b", "Mata bulatmu selalu penasaran melihat dunia. Ummi bisa memandangimu seharian."], ["n01", "a", "Peluk boneka gajahnya erat-erat, ya. Abi akan selalu memelukmu lebih erat."], [17, "a", "Setiap hari bersamamu adalah hari paling indah untuk Ummi dan Abi."]]],
+  ["Kakak Sofia Kecil", [["n02", "b", "Lihat Kakak Sofia berkerudung pink. Lucu dan manis sekali!"], ["n03", "a", "Suaramu yang riang membuat rumah selalu ramai dan ceria."], ["n09", "b", "Kakak Sofia pintar masak-masakan. Nanti kita masak bersama, ya!"], ["n05", "a", "Kakak sudah pandai menggambar. Gambarmu selalu bikin hati Abi senang."], [7, "b", "Gaya Kakak Sofia sudah seperti putri kecil. Cantik dan percaya diri!"]]],
+  ["Adik Ali Lahir", [[16, "a", "Lalu lahirlah Adik Ali, jagoan kecil kita. Rumah jadi makin ramai dan bahagia!"], [9, "b", "Sejak hari itu kalian jadi kakak dan adik. Saling sayang selamanya, ya!"], ["n07", "a", "Jagoan kecil Abi sudah kuat berdiri. Nanti kita ke masjid bersama, ya."], ["n06", "b", "Jalan-jalan malam bersama Ummi. Matamu berbinar melihat lampu-lampu."], [2, "ab", "Kini keluarga kita lengkap: Abi, Ummi, Kakak Sofia, dan Adik Ali."], [8, "a", "Wajah-wajah inilah yang paling Abi rindukan setiap pulang kerja."], [18, "a", "Abi tidak pernah lupa saat kalian duduk di pangkuan Abi. Itu tempat favorit Abi."]]],
+  ["Tumbuh Bersama", [[13, "b", "Kakak Sofia, terima kasih sudah sabar menjaga Adik sejak ia masih bayi."], [4, "a", "Makan bersama, main bersama... Kakak dan Adik yang akur bikin Abi bangga."], [3, "b", "Adik Ali, dengarkan nasihat Kakak, ya. Kakak sayang sekali padamu."], [11, "a", "Tertawa bersama itu obat paling ampuh. Jangan pernah berhenti tertawa!"], ["n04", "b", "Kacamata merah, senyum lebar... si kecil selalu tahu cara membuat kami tertawa."], [6, "a", "Ali jagoan, kalau jatuh, bangun lagi. Pahlawan sejati tidak mudah menyerah!"], [19, "b", "Makan bersama keluarga, sederhana tapi selalu penuh cinta."], [1, "b", "Setiap tahun kalian tumbuh makin pintar. Teruslah belajar dengan rajin."], [5, "ab", "Saat Kakak berulang tahun, Adik ikut bahagia. Itulah artinya saling menyayangi."]]],
+  ["Petualangan Seru", [[12, "b", "Ke mana pun kita pergi, yang paling penting kita selalu bersama."], ["n12", "b", "Capek bermain ya, Kak? Sini bersandar dulu di pelukan Ummi."], ["n10", "a", "Adik Ali kagum melihat mesin-mesin besar. Siapa tahu nanti jadi insinyur hebat!"], ["n11", "a", "Ali berani memanjat tinggi! Tetap hati-hati, ya, jagoan Abi."], [20, "ab", "Setiap perjalanan bersama kalian adalah petualangan paling indah."]]],
+  ["Hari Pertama Sekolah", [["n13", "b", "Seragam baru, semangat baru! Kakak dan Adik siap berangkat sekolah."], ["n14", "a", "Belajar yang rajin, dengarkan guru, dan jadilah teman yang baik."], ["n15", "b", "Kalian tumbuh begitu cepat. Ummi bangga sekali melihat kalian sekarang."], ["n16", "ab", "Tumbuhlah, sayangku... jadilah anak yang sholeh, sehat, dan bahagia."]]]
+];
+const ALBS = [];
+ALBX.forEach((c, ci) => c[1].forEach((s, si) => ALBS.push({ ch: ci, first: si == 0, src: typeof s[0] == "number" ? ALBIMG[s[0] - 1] : "alb/" + s[0] + ".webp", w: s[1], t: s[2] })));
+const ALB_IN = 7, ALB_OUT = 10;
+function albumThen(lv, fn) {
+  fn();
+}
+function albumMenu() {
+  albumShow();
+}
+function albumShow() {
+  const prevMus = MUS.name;
+  key.L = key.R = key.J = 0;
+  ["albMenu", "albOv"].forEach((id) => {
+    const e = document.getElementById(id);
+    if (e) e.remove();
+  });
+  const ov = document.createElement("div");
+  ov.id = "albOv";
+  ov.className = "sgOv axOv";
+  const N = ALBS.length;
+  ov.innerHTML = '<div class="albBg"></div><div class="albPh"><img class="albI0"><img class="albI1"></div><div class="albVig"></div><div class="albHearts"></div><div class="albTop"><span class="albTag">📽️ Album Kenangan</span><button class="albSkip">Tutup ✕</button></div><div class="albBar"><i></i></div><div class="axCh hide"></div><div class="albCap hide"><img class="albAv"><div><b class="albWho"></b><p class="albTx"></p></div></div><div class="sgInfo axCtl hide"><button class="axB axPrev">⏮</button><button class="axB axPlay">⏸</button><button class="axB axNext">⏭</button><div class="axTm"><b>🎵 Tumbuhlah, Sayangku</b><small><span class="sgT">0:00</span> / <span class="sgD">4:24</span> • <span class="axN">0</span>/' + N + '</small></div></div><div class="albTitle"><img class="sgBig" src="' + SONG.cv + '"><div class="albT1">📽️ Album Kenangan</div><div class="albT2">Tumbuhlah, Sayangku</div><div class="albT3">' + N + ' foto kenangan Kakak Sofia &amp; Adik Ali, dari lahir sampai sekolah, dengan pesan dari Ummi &amp; Abi 💞</div><button class="albGo sgGo">▶ Putar Album</button><div class="sgMsg"></div></div>';
+  document.body.appendChild(ov);
+  const $ = (s) => ov.querySelector(s), bg = $(".albBg"), im = [$(".albI0"), $(".albI1")], bar = $(".albBar i"), ttl = $(".albTitle"), ctl = $(".axCtl"), cap = $(".albCap"), tx = $(".albTx"), who = $(".albWho"), av = $(".albAv"), chE = $(".axCh"), msg2 = $(".sgMsg");
+  for (let i = 0; i < 14; i++) {
+    const h = document.createElement("span");
+    h.textContent = ["❤️", "💕", "✨", "💖", "🎵"][i % 5];
+    h.style.left = Math.random() * 100 + "%";
+    h.style.animationDelay = Math.random() * 6 + "s";
+    h.style.fontSize = 14 + Math.random() * 16 + "px";
+    $(".albHearts").appendChild(h);
+  }
+  const a = songAudio();
+  let cur = 0, shown = -2, done = false, started2 = false, noAudio = false, fake = 0, fakeT = null, typer = null, chT = null, ended = false;
+  const pre = (i) => {
+    const s = ALBS[i];
+    if (s && s.src.indexOf("alb/") == 0) {
+      const p = new Image();
+      p.src = s.src;
+    }
+  };
+  const dur = () => noAudio ? ALB_IN + N * 6.5 + ALB_OUT : a.duration && isFinite(a.duration) ? a.duration : 264;
+  const per = () => (dur() - ALB_IN - ALB_OUT) / N;
+  const tNow = () => noAudio ? fake : a.currentTime;
+  const idxAt = (t) => t < ALB_IN ? -1 : Math.min(N, Math.floor((t - ALB_IN) / per()));
+  const show = (i) => {
+    if (i == shown) return;
+    shown = i;
+    clearInterval(typer);
+    if (i < 0) {
+      im.forEach((e) => e.classList.remove("on"));
+      cap.classList.add("hide");
+      chE.classList.add("hide");
+      ttl.classList.remove("gone");
+      ttl.querySelector(".sgGo") && (ttl.querySelector(".sgGo").style.visibility = started2 ? "hidden" : "");
+      return;
+    }
+    if (i >= N) {
+      ending();
+      return;
+    }
+    ttl.classList.add("gone");
+    const S = ALBS[i];
+    cur ^= 1;
+    const p = im[cur], q = im[cur ^ 1];
+    p.src = S.src;
+    p.style.animation = "none";
+    void p.offsetWidth;
+    p.style.animation = "albKB" + i % 3 + " " + (per() + 1.4).toFixed(1) + "s ease-out forwards";
+    p.classList.add("on");
+    q.classList.remove("on");
+    bg.style.backgroundImage = "url(" + S.src + ")";
+    pre(i + 1);
+    pre(i + 2);
+    const W2 = ALBWHO[S.w];
+    who.textContent = W2[0] + (S.w == "ab" ? " 💞" : S.w == "a" ? " 👨" : " 👩");
+    av.src = IMG[W2[1]] || "";
+    av.className = "albAv" + (S.w == "ab" ? " duo" : "");
+    cap.classList.remove("hide");
+    cap.classList.remove("pop");
+    void cap.offsetWidth;
+    cap.classList.add("pop");
+    let c = 0;
+    tx.textContent = "";
+    typer = setInterval(() => {
+      c += 2;
+      tx.textContent = S.t.slice(0, c);
+      if (c >= S.t.length) clearInterval(typer);
+    }, 38);
+    $(".axN").textContent = i + 1;
+    const ch = ALBX[S.ch][0];
+    $(".albTag").textContent = "📽️ " + (S.ch + 1) + ". " + ch;
+    if (S.first) {
+      clearTimeout(chT);
+      chE.innerHTML = "<small>Bagian " + (S.ch + 1) + "</small>" + ch;
+      chE.classList.remove("hide");
+      chE.classList.remove("pop");
+      void chE.offsetWidth;
+      chE.classList.add("pop");
+      chT = setTimeout(() => chE.classList.add("hide"), 3200);
+    } else chE.classList.add("hide");
+  };
+  const ending = () => {
+    im.forEach((e) => e.classList.remove("on"));
+    cap.classList.add("hide");
+    chE.classList.add("hide");
+    $(".albTag").textContent = "📽️ Album Kenangan";
+    ttl.innerHTML = '<div class="albT1">❤️</div><div class="albT2">Ummi &amp; Abi sayang kalian</div><div class="albT3">Kakak Sofia &amp; Adik Ali, tumbuhlah jadi anak yang sholeh, sehat, dan bahagia. Selamanya kalian kebanggaan kami 🌈</div><div class="sgBtns"><button class="albGo sgAgain">🔁 Putar lagi</button><button class="albGo sgClose">Tutup</button></div>';
+    ttl.classList.remove("gone");
+    ttl.querySelector(".sgAgain").onclick = (e) => {
+      e.stopPropagation();
+      seek(0);
+      play();
+    };
+    ttl.querySelector(".sgClose").onclick = (e) => {
+      e.stopPropagation();
+      finish();
+    };
+  };
+  const tick2 = () => {
+    const t = tNow(), d = dur();
+    bar.style.width = Math.min(100, t / d * 100) + "%";
+    $(".sgT").textContent = songFmt(t);
+    $(".sgD").textContent = songFmt(d);
+    show(idxAt(t));
+  };
+  const paused = () => noAudio ? !fakeT : a.paused;
+  const st = () => {
+    $(".axPlay").textContent = paused() ? "▶" : "⏸";
+    ctl.classList.toggle("paused", paused());
+  };
+  const play = () => {
+    ended = false;
+    if (noAudio) {
+      if (!fakeT) {
+        fakeT = setInterval(() => {
+          fake += 0.25;
+          tick2();
+          if (fake >= dur()) {
+            clearInterval(fakeT);
+            fakeT = null;
+            st();
+          }
+        }, 250);
+      }
+      st();
+      return;
+    }
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {
+    });
+  };
+  const pause = () => {
+    if (noAudio) {
+      clearInterval(fakeT);
+      fakeT = null;
+      st();
+      return;
+    }
+    a.pause();
+  };
+  const seek = (t) => {
+    t = Math.max(0, Math.min(dur() - 0.5, t));
+    shown = -2;
+    if (noAudio) fake = t;
+    else {
+      try {
+        a.currentTime = t;
+      } catch (e) {
+      }
+    }
+    tick2();
+  };
+  const slideStart = (i) => i < 0 ? 0 : ALB_IN + i * per() + 0.05;
+  const onEnd = () => {
+    ended = true;
+    show(N);
+    st();
+  };
+  const onErr = () => {
+    if (done || noAudio) return;
+    noAudio = true;
+    msg2.textContent = "";
+    if (started2) {
+      fake = a.currentTime || 0;
+      play();
+    }
+  };
+  const onWait = () => {
+    if (started2 && !noAudio) $(".axPlay").textContent = "⏳";
+  };
+  const ev = [["timeupdate", tick2], ["play", st], ["pause", st], ["playing", st], ["ended", onEnd], ["error", onErr], ["waiting", onWait]];
+  ev.forEach(([k, f]) => a.addEventListener(k, f));
+  const begin = () => {
+    started2 = true;
+    try {
+      musStop();
+    } catch (e) {
+    }
+    clearInterval(SONG.fade);
+    msg2.textContent = "Memuat lagu…";
+    ctl.classList.remove("hide");
+    $(".sgGo").style.visibility = "hidden";
+    if (!MUS.on || noAudio) {
+      noAudio = noAudio || false;
+    }
+    a.volume = 1;
+    try {
+      a.currentTime = 0;
+    } catch (e) {
+    }
+    const p = a.play();
+    const ok = () => {
+      msg2.textContent = "";
+      tick2();
+      st();
+    };
+    if (p && p.then) p.then(ok).catch(() => {
+      noAudio = true;
+      msg2.textContent = "";
+      fake = 0;
+      play();
+      tick2();
+    });
+    else ok();
+    pre(0);
+    pre(1);
+  };
+  const finish = () => {
+    if (done) return;
+    done = true;
+    clearInterval(typer);
+    clearInterval(fakeT);
+    clearTimeout(chT);
+    ev.forEach(([k, f]) => a.removeEventListener(k, f));
+    songFade(0, 400, () => {
+      a.pause();
+      try {
+        a.currentTime = 0;
+      } catch (e) {
+      }
+    });
+    ov.classList.add("out");
+    setTimeout(() => {
+      ov.remove();
+      try {
+        if (prevMus) musPlay(prevMus);
+      } catch (e) {
+      }
+    }, 600);
+  };
+  $(".sgGo").onclick = (e) => {
+    e.stopPropagation();
+    begin();
+  };
+  $(".albSkip").onclick = (e) => {
+    e.stopPropagation();
+    finish();
+  };
+  $(".axPlay").onclick = (e) => {
+    e.stopPropagation();
+    if (ended) {
+      seek(0);
+      play();
+      return;
+    }
+    paused() ? play() : pause();
+  };
+  $(".axPrev").onclick = (e) => {
+    e.stopPropagation();
+    const i = idxAt(tNow());
+    seek(slideStart(Math.max(-1, tNow() - slideStart(i) > 1.5 ? i : i - 1)));
+  };
+  $(".axNext").onclick = (e) => {
+    e.stopPropagation();
+    const i = idxAt(tNow());
+    if (i + 1 >= N) seek(dur() - ALB_OUT + 0.1);
+    else seek(slideStart(i + 1));
+  };
+  ov.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button")) return;
+    e.preventDefault();
+    if (!started2 || ended) return;
+    paused() ? play() : pause();
+  });
+  const kh = (e) => {
+    if (!document.body.contains(ov)) {
+      removeEventListener("keydown", kh, true);
+      return;
+    }
+    e.stopPropagation();
+    if (e.key == "Escape") finish();
+    else if (started2 && e.key == " ") {
+      paused() ? play() : pause();
+    } else if (started2 && e.key == "ArrowRight") $(".axNext").click();
+    else if (started2 && e.key == "ArrowLeft") $(".axPrev").click();
+  };
+  addEventListener("keydown", kh, true);
+  im[0].src = ALBS[0].src;
+  bg.style.backgroundImage = "url(" + ALBS[0].src + ")";
+}
 function msState() {
   let o = {};
   try {
