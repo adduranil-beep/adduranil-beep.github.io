@@ -404,6 +404,69 @@ body:not(.ingame) #fsBtn{display:none!important}
 #msg .big+.big{margin-left:8px}
 body.perfLite .btn{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:#ffffff3d!important}
 body.ingame .hmLogo,body.ingame .hmL2,body.ingame .hmL2 i,body.ingame #hmPlay::after,body.ingame .hmRib,body.ingame .hmPick,body.ingame #title .card{animation-play-state:paused!important}
+
+/* ===== Beranda pas di semua HP (tegak & miring) ===== */
+.hmTop{min-width:0;flex-wrap:nowrap}
+.hmTop #profBar{min-width:0;flex:0 1 auto;overflow:hidden}
+.pbRow{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
+.pbWho{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pbBtn{white-space:nowrap;flex:0 0 auto}
+.hmPills{flex:0 0 auto;min-width:0}
+.hmL1{line-height:1.15;margin-bottom:max(5px,.45em)}
+.hmL2{padding-top:.06em}
+@media (orientation:landscape){.hmNav button{white-space:nowrap}}
+@media (orientation:portrait){.hmNav button{white-space:normal;line-height:1.05;word-break:keep-all}}
+@media (max-height:500px),(max-width:500px){.hmLogo{filter:none}.hmL1{margin-bottom:8px!important}.hmL2 span,.hmL2 i{animation-name:hmBounceS!important}}
+@keyframes hmBounceS{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@media (orientation:portrait){
+ .hmTop{flex-wrap:wrap;justify-content:space-between;row-gap:5px}
+ .hmLogo{padding-top:2px}
+}
+@media (orientation:portrait) and (max-width:520px){
+ .hmTop{justify-content:center}
+ .hmTop #profBar{flex:1 1 100%}
+ .pbRow{justify-content:space-between}
+ .hmPills{gap:5px;justify-content:center;flex-wrap:wrap}
+ .hmIco{width:34px;height:34px;min-width:34px;min-height:34px;font-size:16px}
+ .hmPill{font-size:13px;padding:3px 9px}
+ .pbCont{display:block;width:100%;margin-top:5px;padding:7px 10px!important;font-size:15px!important}
+}
+@media (orientation:portrait) and (max-width:340px){
+ .pbT{font-size:11px}.pbWho{font-size:12px}
+ .hmPills{gap:3px}.hmIco{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px}
+ .hmPill{font-size:11px;padding:2px 7px}
+ .pbCont{font-size:13px!important}.pbCont small{display:none}
+}
+@media (orientation:portrait) and (max-height:600px){.pbCont{padding:5px 8px!important;font-size:13px!important}.pbCont small{display:none}}
+/* tablet & HP lipat posisi tegak: kartu lebih besar */
+@media (orientation:portrait) and (min-width:600px){
+ #title .card{max-width:200px!important;padding:10px 6px!important}
+ #title .card .cCv{width:min(18vw,150px);height:min(17vw,136px)}
+ #title .card b{font-size:20px!important}#title .card small{font-size:13px!important}
+ #title .card .cStat{display:grid;transform:none}
+ .hmNews{max-width:560px}
+ .hmNav button{max-width:120px;font-size:14px}.hmNav b{font-size:28px}
+ #hmPlay{max-width:460px}
+}
+/* posisi miring: menu kiri selalu muat tinggi layar */
+@media (orientation:landscape){
+ .hmNav{display:flex;flex-direction:column;justify-content:space-evenly;align-self:stretch;min-height:0;overflow:hidden;padding-top:2px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+ .hmNav button{flex:0 1 auto;min-height:0}
+}
+@media (orientation:landscape) and (max-height:500px){
+ .hmTop{padding-top:max(3px,env(safe-area-inset-top));padding-bottom:2px}
+ .hmNav{gap:3px}
+ .hmNav button{flex:1 1 0;max-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;font-size:9.5px;padding:1px 3px}
+ .hmNav b{font-size:min(18px,5.2vh)}
+ .pbCont{padding:4px 10px!important;font-size:12px!important;margin-top:3px}.pbCont small{display:none}
+}
+@media (orientation:landscape) and (max-height:340px){
+ .hmNav button{font-size:8.5px;border-radius:11px}.hmNav b{font-size:min(15px,4.8vh)}
+ .hmIco{width:30px;height:30px;min-width:30px;min-height:30px;font-size:14px}
+}
+@media (orientation:landscape) and (max-width:600px){
+ .pbT{display:none}
+}
 </style>
 </head>
 <body>
@@ -15610,7 +15673,7 @@ function renderProfBar() {
   const b = document.getElementById("profBar");
   if (!b) return;
   const s = gameLoad();
-  let h = '<div class="pbRow"><span class="pbWho">👤 <b>' + esc(KAK) + "</b> &amp; <b>" + esc(ADK) + '</b></span><button class="pbBtn" onclick="openProf()">👥 Ganti / Pemain Baru</button></div>';
+  let h = '<div class="pbRow"><span class="pbWho">👤 <b>' + esc(KAK) + "</b> &amp; <b>" + esc(ADK) + '</b></span><button class="pbBtn" onclick="openProf()">👥<span class="pbT"> Ganti / Pemain Baru</span></button></div>';
   if (s && s.level) h += '<button class="big pbCont" onclick="contGame()">▶ Lanjutkan Level ' + s.level + " <small>(❤" + s.lives + " • skor " + s.score + ")</small></button>";
   b.innerHTML = h;
 }
